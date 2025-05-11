@@ -66,6 +66,78 @@
             color: var(--primary-color);
         }
         
+        /* 새로운 탭 스타일 */
+        .modern-tabs {
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        
+        .modern-tabs-item {
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .modern-tabs-link {
+            display: block;
+            padding: 15px 20px;
+            color: #777;
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+            outline: none;
+            background: transparent;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            width: 100%;
+        }
+        
+        .modern-tabs-link i {
+            margin-right: 8px;
+            font-size: 1.2em;
+            vertical-align: middle;
+        }
+        
+        .modern-tabs-link.active {
+            color: var(--primary-color);
+            background-color: #f8fff8;
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .modern-tabs-link:hover:not(.active) {
+            color: var(--primary-dark);
+            background-color: rgba(76, 175, 80, 0.05);
+        }
+        
+        /* 반응형 처리 */
+        @media (max-width: 768px) {
+            .modern-tabs {
+                flex-direction: column;
+            }
+            
+            .modern-tabs-link {
+                padding: 12px 15px;
+                text-align: left;
+                border-bottom: 1px solid #f0f0f0;
+                border-left: 3px solid transparent;
+            }
+            
+            .modern-tabs-link.active {
+                border-bottom: 1px solid #f0f0f0;
+                border-left: 3px solid var(--primary-color);
+            }
+        }
+        
         .tab-container {
             background-color: white;
             border-radius: 10px;
@@ -73,45 +145,13 @@
             overflow: hidden;
         }
         
-        .tab-navigation {
-            display: flex;
-            background-color: var(--light-color);
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .tab-btn {
-            padding: 12px 20px;
-            cursor: pointer;
-            border: none;
-            background: none;
-            font-weight: 500;
-            color: #666;
-            position: relative;
-            transition: all 0.3s;
-        }
-        
-        .tab-btn.active {
-            color: var(--primary-color);
-            background-color: white;
-        }
-        
-        .tab-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background-color: var(--primary-color);
-        }
-        
-        .tab-btn i {
-            margin-right: 6px;
-        }
-        
-        /* 메인 앱 탭 컨텐츠 스타일 - 기존 클래스명 유지 */
+        /* 탭 콘텐츠 영역 스타일 개선 */
         .tab-content {
-            padding: 20px;
+            padding: 25px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
         }
         
         /* Bootstrap 5 탭 스타일 오버라이드 */
@@ -144,6 +184,31 @@
             overflow: visible;
         }
         
+        /* 하위 탭(분류 관리 등)에 대한 별도 스타일 */
+        .sub-tabs {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .sub-tabs .nav-link {
+            margin-bottom: -1px;
+            border: 1px solid transparent;
+            border-top-left-radius: 0.25rem;
+            border-top-right-radius: 0.25rem;
+            padding: 8px 16px;
+            font-size: 0.95rem;
+        }
+        
+        .sub-tabs .nav-link.active {
+            color: var(--primary-color);
+            background-color: #fff;
+            border-color: #dee2e6 #dee2e6 #fff;
+        }
+        
+        .sub-tabs .nav-link:hover:not(.active) {
+            border-color: #e9ecef #e9ecef #dee2e6;
+        }
+        
         .month-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -155,6 +220,13 @@
             border-radius: 8px;
             overflow: hidden;
             background-color: white;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .month-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         
         .month-header {
@@ -389,42 +461,68 @@
             margin: 15px 0;
         }
         
-        /* Bootstrap 탭 스타일 오버라이드 */
-        .nav-tabs .nav-link {
-            cursor: pointer;
-            color: #495057;
-            background-color: #fff;
-            border: 1px solid transparent;
-            border-top-left-radius: 0.25rem;
-            border-top-right-radius: 0.25rem;
-            padding: 0.5rem 1rem;
-            margin-bottom: -1px;
-            text-decoration: none;
+        /* 푸터 스타일 */
+        .footer {
+            margin-top: 2rem;
+            padding-bottom: 2rem;
         }
         
-        .nav-tabs .nav-link:hover {
-            border-color: #e9ecef #e9ecef #dee2e6;
+        .footer hr {
+            border-color: #eaeaea;
         }
         
-        .nav-tabs .nav-link.active {
+        .footer .text-muted {
+            color: #888 !important;
+        }
+        
+        .footer .creator-name {
+            font-weight: 600;
+            color: #555;
+            transition: all 0.3s ease;
+            display: inline-block;
+            padding: 0.35rem 1rem;
+            border-radius: 50px;
+            background-color: #f8f9fa;
+            border: 1px solid #eee;
+        }
+        
+        .footer .creator-name:hover {
             color: var(--primary-color);
-            background-color: #fff;
-            border-color: #dee2e6 #dee2e6 #fff;
+            background-color: #f0f7f0;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(76, 175, 80, 0.15);
         }
         
-        /* 반응형 조정 */
-        @media (max-width: 768px) {
-            .month-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .category-form {
-                grid-template-columns: 1fr;
-            }
-            
-            .summary-pills {
-                flex-direction: column;
-            }
+        .footer .heart-icon {
+            display: inline-block;
+            animation: heartbeat 1.5s infinite ease-in-out;
+            color: #ff5252;
+            margin: 0 3px;
+        }
+        
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            5% { transform: scale(1.2); }
+            10% { transform: scale(1.1); }
+            15% { transform: scale(1.3); }
+            50% { transform: scale(1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* 이월 잔액 스타일 */
+        .carryover-info {
+            padding: 5px 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            border-left: 3px solid #ddd;
+        }
+        
+        .final-balance-info {
+            background-color: #f8fff8;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+            padding: 5px 0;
         }
     </style>
 </head>
@@ -434,12 +532,16 @@
             <h1><i class="bi bi-calendar-check"></i> 연간 지출 관리 앱</h1>
             <div class="summary-pills">
                 <div class="summary-pill">
-                    <i class="bi bi-cash-stack"></i>
-                    <span>연간 총 지출: <span id="total-expense">0</span>원</span>
+                    <i class="bi bi-cash-stack text-danger"></i>
+                    <span>연간 총 지출: <span id="total-expense" class="text-danger">0</span>원</span>
                 </div>
                 <div class="summary-pill">
-                    <i class="bi bi-bar-chart"></i>
-                    <span>월 평균 지출: <span id="monthly-average">0</span>원</span>
+                    <i class="bi bi-cash-coin text-primary"></i>
+                    <span>연간 총 수입: <span id="total-income" class="text-primary">0</span>원</span>
+                </div>
+                <div class="summary-pill">
+                    <i class="bi bi-wallet2"></i>
+                    <span>연간 순수입: <span id="net-income">0</span>원</span>
                 </div>
                 <select id="year-selector" class="form-select form-select-sm" style="width: 120px;">
                     <!-- 년도 옵션은 자바스크립트로 생성 -->
@@ -449,27 +551,39 @@
         
         <div class="container-fluid">
             
-            <!-- 탭 네비게이션 -->
-            <ul class="nav nav-tabs mb-4" id="mainTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="calendar-tab-btn" data-bs-toggle="tab" data-bs-target="#calendar-tab" type="button" role="tab" aria-controls="calendar-tab" aria-selected="true">지출 달력</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="recurring-expense-tab-btn" data-bs-toggle="tab" data-bs-target="#recurring-expense-tab" type="button" role="tab" aria-controls="recurring-expense-tab" aria-selected="false">반복 지출</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="one-time-expense-tab-btn" data-bs-toggle="tab" data-bs-target="#one-time-expense-tab" type="button" role="tab" aria-controls="one-time-expense-tab" aria-selected="false">일회성 지출</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="category-management-tab-btn" data-bs-toggle="tab" data-bs-target="#category-management-tab" type="button" role="tab" aria-controls="category-management-tab" aria-selected="false">분류 관리</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="holiday-management-tab-btn" data-bs-toggle="tab" data-bs-target="#holiday-management-tab" type="button" role="tab" aria-controls="holiday-management-tab" aria-selected="false">공휴일 관리</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="settings-tab-btn" data-bs-toggle="tab" data-bs-target="#settings-tab" type="button" role="tab" aria-controls="settings-tab" aria-selected="false">설정</button>
-                </li>
-            </ul>
+            <!-- 탭 네비게이션 - 모던 스타일 -->
+            <div class="modern-tabs" id="mainTab" role="tablist">
+                <div class="modern-tabs-item" role="presentation">
+                    <button class="modern-tabs-link active" id="calendar-tab-btn" data-bs-toggle="tab" data-bs-target="#calendar-tab" type="button" role="tab" aria-controls="calendar-tab" aria-selected="true">
+                        <i class="bi bi-calendar-check"></i> 지출 달력
+                    </button>
+                </div>
+                <div class="modern-tabs-item" role="presentation">
+                    <button class="modern-tabs-link" id="recurring-expense-tab-btn" data-bs-toggle="tab" data-bs-target="#recurring-expense-tab" type="button" role="tab" aria-controls="recurring-expense-tab" aria-selected="false">
+                        <i class="bi bi-arrow-repeat"></i> 반복 지출
+                    </button>
+                </div>
+                <div class="modern-tabs-item" role="presentation">
+                    <button class="modern-tabs-link" id="one-time-expense-tab-btn" data-bs-toggle="tab" data-bs-target="#one-time-expense-tab" type="button" role="tab" aria-controls="one-time-expense-tab" aria-selected="false">
+                        <i class="bi bi-receipt"></i> 일회성 지출
+                    </button>
+                </div>
+                <div class="modern-tabs-item" role="presentation">
+                    <button class="modern-tabs-link" id="category-management-tab-btn" data-bs-toggle="tab" data-bs-target="#category-management-tab" type="button" role="tab" aria-controls="category-management-tab" aria-selected="false">
+                        <i class="bi bi-tags"></i> 분류 관리
+                    </button>
+                </div>
+                <div class="modern-tabs-item" role="presentation">
+                    <button class="modern-tabs-link" id="holiday-management-tab-btn" data-bs-toggle="tab" data-bs-target="#holiday-management-tab" type="button" role="tab" aria-controls="holiday-management-tab" aria-selected="false">
+                        <i class="bi bi-calendar-event"></i> 공휴일 관리
+                    </button>
+                </div>
+                <div class="modern-tabs-item" role="presentation">
+                    <button class="modern-tabs-link" id="settings-tab-btn" data-bs-toggle="tab" data-bs-target="#settings-tab" type="button" role="tab" aria-controls="settings-tab" aria-selected="false">
+                        <i class="bi bi-gear"></i> 설정
+                    </button>
+                </div>
+            </div>
             
             <!-- 탭 콘텐츠 -->
             <div class="tab-content" id="mainTabContent">
@@ -570,12 +684,16 @@
                 <!-- 분류 관리 탭 -->
                 <div class="tab-pane fade" id="category-management-tab" role="tabpanel" aria-labelledby="category-management-tab-btn">
                     
-                    <ul class="nav nav-tabs mb-3" id="categoryTabs" role="tablist">
+                    <ul class="nav nav-tabs sub-tabs mb-4" id="categoryTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="main-category-tab" data-bs-toggle="tab" data-bs-target="#main-category" type="button" role="tab" aria-controls="main-category" aria-selected="true">대분류</button>
+                            <button class="nav-link active" id="main-category-tab" data-bs-toggle="tab" data-bs-target="#main-category" type="button" role="tab" aria-controls="main-category" aria-selected="true">
+                                <i class="bi bi-list-ul"></i> 대분류
+                            </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="sub-category-tab" data-bs-toggle="tab" data-bs-target="#sub-category" type="button" role="tab" aria-controls="sub-category" aria-selected="false">중분류</button>
+                            <button class="nav-link" id="sub-category-tab" data-bs-toggle="tab" data-bs-target="#sub-category" type="button" role="tab" aria-controls="sub-category" aria-selected="false">
+                                <i class="bi bi-list-nested"></i> 중분류
+                            </button>
                         </li>
                     </ul>
                     
@@ -650,7 +768,6 @@
                     </div>
                     <div class="row">
                         <div class="col-md-4">
-                            <h3>공휴일 추가</h3>
                             <form id="add-holiday-form" class="mb-4">
                                 <div class="mb-3">
                                     <label for="holiday-date" class="form-label">날짜:</label>
@@ -696,6 +813,21 @@
         </div>
     </div>
     
+    <!-- 푸터 추가 -->
+    <footer class="footer mt-auto py-3">
+        <div class="container text-center">
+            <hr class="my-4">
+            <p class="mb-2">
+                <span class="creator-name">
+                    <i class="bi bi-heart-fill heart-icon"></i> 어흥&크앙 아빠 <i class="bi bi-heart-fill heart-icon"></i>
+                </span>
+            </p>
+            <p class="text-muted small">
+                <i class="bi bi-c-circle"></i> 2024 연간 지출 관리 앱
+            </p>
+        </div>
+    </footer>
+    
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -708,15 +840,15 @@
     <script src="js/holiday-manager.js"></script>
     <script src="js/app.js"></script>
     
-    <!-- Bootstrap 탭 수동 초기화 -->
+    <!-- 탭 전환 스크립트 수정 -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // 메인 탭 이벤트 설정
-            const mainTabButtons = document.querySelectorAll('#mainTab [data-bs-toggle="tab"]');
+            const mainTabButtons = document.querySelectorAll('#mainTab .modern-tabs-link');
             setupTabButtons(mainTabButtons, '#mainTabContent');
             
             // 중첩된 탭(카테고리 탭) 이벤트 설정
-            const categoryTabButtons = document.querySelectorAll('#categoryTabs [data-bs-toggle="tab"]');
+            const categoryTabButtons = document.querySelectorAll('#categoryTabs .nav-link');
             setupTabButtons(categoryTabButtons, '#categoryTabContent');
             
             // 탭 버튼 기능 초기화 함수
