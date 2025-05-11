@@ -111,11 +111,19 @@
         
         /* 메인 앱 탭 컨텐츠 스타일 - 기존 클래스명 유지 */
         .tab-content {
-            display: none;
             padding: 20px;
         }
         
-        .tab-content.active {
+        /* Bootstrap 5 탭 스타일 오버라이드 */
+        .tab-pane {
+            display: none;
+        }
+        
+        .tab-pane.active {
+            display: block;
+        }
+        
+        .tab-pane.show.active {
             display: block;
         }
         
@@ -146,6 +154,7 @@
             border: 1px solid var(--border-color);
             border-radius: 8px;
             overflow: hidden;
+            background-color: white;
         }
         
         .month-header {
@@ -157,6 +166,7 @@
         
         .month-body {
             padding: 15px;
+            background-color: white;
         }
         
         .expense-form {
@@ -262,6 +272,7 @@
             max-width: 900px;
             max-height: 90vh;
             overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
         
         .popup-header {
@@ -287,15 +298,118 @@
             cursor: pointer;
         }
         
+        /* 팝업 내부 탭 스타일 */
+        .popup-body .nav-tabs {
+            margin-bottom: 20px;
+        }
+        
+        .popup-body .summary-container h4 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        /* 달력 그리드 스타일 개선 */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .calendar-container {
+            margin-bottom: 30px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .calendar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .calendar-year {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .summary-table {
+            width: 100%;
+            margin-bottom: 15px;
+            border-collapse: collapse;
+            background-color: white;
+        }
+        
+        .summary-table th,
+        .summary-table td {
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }
+        
+        .summary-table th {
+            font-weight: bold;
+            background-color: #f5f5f5;
+        }
+        
+        .summary-total {
+            font-weight: bold;
+            background-color: #f9f9f9;
+        }
+        
+        .detail-btn {
+            display: block;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .no-expense-msg {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+            padding: 15px 0;
+            background-color: white;
+        }
+        
+        /* 로딩 메시지 스타일 */
+        .loading-message {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
         /* Bootstrap 탭 스타일 오버라이드 */
         .nav-tabs .nav-link {
             cursor: pointer;
+            color: #495057;
+            background-color: #fff;
+            border: 1px solid transparent;
+            border-top-left-radius: 0.25rem;
+            border-top-right-radius: 0.25rem;
+            padding: 0.5rem 1rem;
+            margin-bottom: -1px;
+            text-decoration: none;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            border-color: #e9ecef #e9ecef #dee2e6;
         }
         
         .nav-tabs .nav-link.active {
-            font-weight: bold;
             color: var(--primary-color);
-            border-color: var(--border-color) var(--border-color) #fff;
+            background-color: #fff;
+            border-color: #dee2e6 #dee2e6 #fff;
         }
         
         /* 반응형 조정 */
@@ -327,312 +441,252 @@
                     <i class="bi bi-bar-chart"></i>
                     <span>월 평균 지출: <span id="monthly-average">0</span>원</span>
                 </div>
-                <select id="year" class="form-select form-select-sm" style="width: 120px;">
+                <select id="year-selector" class="form-select form-select-sm" style="width: 120px;">
                     <!-- 년도 옵션은 자바스크립트로 생성 -->
                 </select>
             </div>
         </div>
         
-        <div class="tab-container">
-            <div class="tab-navigation">
-                <button class="tab-btn active" data-tab="calendar">
-                    <i class="bi bi-calendar-month"></i> 지출 달력
-                </button>
-                <button class="tab-btn" data-tab="recurring">
-                    <i class="bi bi-arrow-repeat"></i> 반복 지출
-                </button>
-                <button class="tab-btn" data-tab="onetime">
-                    <i class="bi bi-receipt"></i> 일회성 지출
-                </button>
-                <button class="tab-btn" data-tab="category">
-                    <i class="bi bi-tags"></i> 분류 관리
-                </button>
-                <button class="tab-btn" data-tab="holiday">
-                    <i class="bi bi-star"></i> 공휴일
-                </button>
-                <button class="tab-btn" data-tab="settings">
-                    <i class="bi bi-gear"></i> 설정
-                </button>
-            </div>
+        <div class="container-fluid">
             
-            <!-- 지출 달력 탭 -->
-            <div class="tab-content active" id="calendar-tab">
-                <div class="calendar-controls mb-3">
-                    <div class="btn-group">
-                        <button id="prev-year" class="btn btn-outline-secondary">
-                            <i class="bi bi-chevron-left"></i> 이전 년도
-                        </button>
-                        <span id="calendar-year" class="btn btn-outline-secondary disabled"></span>
-                        <button id="next-year" class="btn btn-outline-secondary">
-                            다음 년도 <i class="bi bi-chevron-right"></i>
-                        </button>
+            <!-- 탭 네비게이션 -->
+            <ul class="nav nav-tabs mb-4" id="mainTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="calendar-tab-btn" data-bs-toggle="tab" data-bs-target="#calendar-tab" type="button" role="tab" aria-controls="calendar-tab" aria-selected="true">지출 달력</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="recurring-expense-tab-btn" data-bs-toggle="tab" data-bs-target="#recurring-expense-tab" type="button" role="tab" aria-controls="recurring-expense-tab" aria-selected="false">반복 지출</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="one-time-expense-tab-btn" data-bs-toggle="tab" data-bs-target="#one-time-expense-tab" type="button" role="tab" aria-controls="one-time-expense-tab" aria-selected="false">일회성 지출</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="category-management-tab-btn" data-bs-toggle="tab" data-bs-target="#category-management-tab" type="button" role="tab" aria-controls="category-management-tab" aria-selected="false">분류 관리</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="holiday-management-tab-btn" data-bs-toggle="tab" data-bs-target="#holiday-management-tab" type="button" role="tab" aria-controls="holiday-management-tab" aria-selected="false">공휴일 관리</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="settings-tab-btn" data-bs-toggle="tab" data-bs-target="#settings-tab" type="button" role="tab" aria-controls="settings-tab" aria-selected="false">설정</button>
+                </li>
+            </ul>
+            
+            <!-- 탭 콘텐츠 -->
+            <div class="tab-content" id="mainTabContent">
+                <!-- 지출 달력 탭 -->
+                <div class="tab-pane fade show active" id="calendar-tab" role="tabpanel" aria-labelledby="calendar-tab-btn">
+                    <!-- 지출 달력 내용 -->
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button id="prev-year-btn" class="btn btn-outline-primary">이전 년도</button>
+                            <h2 id="calendar-year" class="calendar-year">2023</h2>
+                            <button id="next-year-btn" class="btn btn-outline-primary">다음 년도</button>
+                        </div>
+                        <div id="expense-calendar" class="calendar-grid"></div>
                     </div>
                 </div>
-                <div id="expense-calendar" class="month-grid"></div>
-            </div>
-            
-            <!-- 반복 지출 탭 -->
-            <div class="tab-content" id="recurring-tab">
-                <div class="row">
-                    <div class="col-md-5">
-                        <div class="expense-form">
-                            <div class="form-title">반복 지출 추가</div>
-                            <div class="mb-3">
-                                <label for="recurring-start-date" class="form-label">시작 년월:</label>
-                                <input type="month" id="recurring-start-date" class="form-control">
-                            </div>
-                            <div class="mb-3">
-                                <label for="recurring-end-date" class="form-label">종료 년월 (선택):</label>
-                                <input type="month" id="recurring-end-date" class="form-control">
-                            </div>
-                            <div class="mb-3">
-                                <label for="day" class="form-label">매월 지출일:</label>
-                                <input type="number" id="day" value="25" min="1" max="31" class="form-control">
-                            </div>
-                            <div class="mb-3">
-                                <label for="amount" class="form-label">금액:</label>
-                                <input type="number" id="amount" placeholder="금액 입력" class="form-control">
-                            </div>
-                            <div class="mb-3">
-                                <label for="description" class="form-label">설명:</label>
-                                <input type="text" id="description" placeholder="설명 입력" class="form-control">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">분류:</label>
-                                <div class="row">
-                                    <div class="col-md-6 mb-2">
-                                        <select class="form-select main-category-select" id="recurring-main-category">
-                                            <option value="">대분류 선택</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <select class="form-select sub-category-select" id="recurring-sub-category">
-                                            <option value="">중분류 선택</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <button id="add-recurring" class="btn btn-primary">
-                                <i class="bi bi-plus-circle"></i> 추가하기
-                            </button>
-                        </div>
-                    </div>
-                    <div class="col-md-7">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">설정된 반복 지출</h5>
-                            </div>
-                            <div class="card-body">
-                                <ul id="recurring-list" class="expense-list"></ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 일회성 지출 탭 -->
-            <div class="tab-content" id="onetime-tab">
-                <div class="row">
-                    <div class="col-md-5">
-                        <div class="expense-form">
-                            <div class="form-title">일회성 지출 추가</div>
-                            <div class="mb-3">
-                                <label for="one-time-date" class="form-label">날짜:</label>
-                                <input type="date" id="one-time-date" class="form-control">
-                            </div>
-                            <div class="mb-3">
-                                <label for="one-time-amount" class="form-label">금액:</label>
-                                <input type="number" id="one-time-amount" placeholder="금액 입력" class="form-control">
-                            </div>
-                            <div class="mb-3">
-                                <label for="one-time-description" class="form-label">설명:</label>
-                                <input type="text" id="one-time-description" placeholder="설명 입력" class="form-control">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">분류:</label>
-                                <div class="row">
-                                    <div class="col-md-6 mb-2">
-                                        <select class="form-select main-category-select" id="one-time-main-category">
-                                            <option value="">대분류 선택</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <select class="form-select sub-category-select" id="one-time-sub-category">
-                                            <option value="">중분류 선택</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <button id="add-one-time" class="btn btn-primary">
-                                <i class="bi bi-plus-circle"></i> 추가하기
-                            </button>
-                        </div>
-                    </div>
-                    <div class="col-md-7">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">등록된 일회성 지출</h5>
-                            </div>
-                            <div class="card-body">
-                                <div id="onetime-list"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 분류 관리 탭 -->
-            <div class="tab-content" id="category-tab">
-                <ul class="nav nav-tabs mb-4">
-                    <li class="nav-item">
-                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#main-category">대분류</button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sub-category">중분류</button>
-                    </li>
-                </ul>
                 
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="main-category">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="card mb-4">
-                                    <div class="card-header">대분류 추가</div>
-                                    <div class="card-body">
-                                        <div class="mb-3">
-                                            <label for="main-category-code" class="form-label">분류 코드:</label>
-                                            <input type="text" id="main-category-code" placeholder="분류 코드 (예: LIVING)" maxlength="10" class="form-control">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="main-category-name" class="form-label">분류명:</label>
-                                            <input type="text" id="main-category-name" placeholder="분류명 (예: 생활비)" class="form-control">
-                                        </div>
-                                        <button id="add-main-category-btn" class="btn btn-primary">
-                                            <i class="bi bi-plus-circle"></i> 추가
-                                        </button>
-                                    </div>
+                <!-- 반복 지출 탭 -->
+                <div class="tab-pane fade" id="recurring-expense-tab" role="tabpanel" aria-labelledby="recurring-expense-tab-btn">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h3>반복 지출 등록</h3>
+                            <form id="add-recurring-expense-form" class="mb-4">
+                                <div class="mb-3">
+                                    <label for="recurring-day" class="form-label">지출일:</label>
+                                    <input type="number" id="recurring-day" min="1" max="31" class="form-control" placeholder="1-31">
                                 </div>
-                            </div>
-                            <div class="col-md-8">
-                                <div class="card">
-                                    <div class="card-header">등록된 대분류</div>
-                                    <div class="card-body">
-                                        <div id="main-category-list"></div>
-                                    </div>
+                                <div class="mb-3">
+                                    <label for="recurring-amount" class="form-label">금액:</label>
+                                    <input type="number" id="recurring-amount" class="form-control" placeholder="금액">
                                 </div>
-                            </div>
+                                <div class="mb-3">
+                                    <label for="recurring-description" class="form-label">내용:</label>
+                                    <input type="text" id="recurring-description" class="form-control" placeholder="지출 내용">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="recurring-main-category" class="form-label">대분류:</label>
+                                    <select id="recurring-main-category" class="form-control main-category-selector"></select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="recurring-sub-category" class="form-label">중분류:</label>
+                                    <select id="recurring-sub-category" class="form-control sub-category-selector"></select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="recurring-start-date" class="form-label">시작월:</label>
+                                    <input type="month" id="recurring-start-date" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="recurring-end-date" class="form-label">종료월 (선택):</label>
+                                    <input type="month" id="recurring-end-date" class="form-control">
+                                </div>
+                                <button type="submit" class="btn btn-primary">등록</button>
+                            </form>
+                        </div>
+                        <div class="col-md-8">
+                            <h3>반복 지출 목록</h3>
+                            <div id="recurring-expense-list"></div>
                         </div>
                     </div>
+                </div>
+                
+                <!-- 일회성 지출 탭 -->
+                <div class="tab-pane fade" id="one-time-expense-tab" role="tabpanel" aria-labelledby="one-time-expense-tab-btn">
+                    <h2>일회성 지출 관리</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h3>일회성 지출 등록</h3>
+                            <form id="add-one-time-expense-form" class="mb-4">
+                                <div class="mb-3">
+                                    <label for="one-time-date" class="form-label">날짜:</label>
+                                    <input type="date" id="one-time-date" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="one-time-amount" class="form-label">금액:</label>
+                                    <input type="number" id="one-time-amount" class="form-control" placeholder="금액">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="one-time-description" class="form-label">내용:</label>
+                                    <input type="text" id="one-time-description" class="form-control" placeholder="지출 내용">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="one-time-main-category" class="form-label">대분류:</label>
+                                    <select id="one-time-main-category" class="form-control main-category-selector"></select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="one-time-sub-category" class="form-label">중분류:</label>
+                                    <select id="one-time-sub-category" class="form-control sub-category-selector"></select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">등록</button>
+                            </form>
+                        </div>
+                        <div class="col-md-8">
+                            <h3>일회성 지출 목록</h3>
+                            <div id="one-time-expense-list"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 분류 관리 탭 -->
+                <div class="tab-pane fade" id="category-management-tab" role="tabpanel" aria-labelledby="category-management-tab-btn">
                     
-                    <div class="tab-pane fade" id="sub-category">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="card mb-4">
-                                    <div class="card-header">중분류 추가</div>
-                                    <div class="card-body">
-                                        <div class="mb-3">
-                                            <label for="sub-category-main" class="form-label">대분류:</label>
-                                            <select id="sub-category-main" class="form-select"></select>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="sub-category-code" class="form-label">분류 코드:</label>
-                                            <input type="text" id="sub-category-code" placeholder="분류 코드 (예: FOOD)" maxlength="10" class="form-control">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="sub-category-name" class="form-label">분류명:</label>
-                                            <input type="text" id="sub-category-name" placeholder="분류명 (예: 식비)" class="form-control">
-                                        </div>
-                                        <button id="add-sub-category-btn" class="btn btn-primary">
-                                            <i class="bi bi-plus-circle"></i> 추가
-                                        </button>
+                    <ul class="nav nav-tabs mb-3" id="categoryTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="main-category-tab" data-bs-toggle="tab" data-bs-target="#main-category" type="button" role="tab" aria-controls="main-category" aria-selected="true">대분류</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="sub-category-tab" data-bs-toggle="tab" data-bs-target="#sub-category" type="button" role="tab" aria-controls="sub-category" aria-selected="false">중분류</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="categoryTabContent">
+                        <!-- 대분류 탭 -->
+                        <div class="tab-pane fade show active" id="main-category" role="tabpanel" aria-labelledby="main-category-tab">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <h3>대분류 추가</h3>
+                                    <div class="mb-3">
+                                        <label for="main-category-code" class="form-label">분류 코드:</label>
+                                        <input type="text" id="main-category-code" placeholder="분류 코드 (예: LIVING)" maxlength="10" class="form-control">
                                     </div>
+                                    <div class="mb-3">
+                                        <label for="main-category-name" class="form-label">분류명:</label>
+                                        <input type="text" id="main-category-name" placeholder="분류명 (예: 생활비)" class="form-control">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">분류 유형:</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="category-type" id="category-type-expense" value="expense" checked>
+                                            <label class="form-check-label" for="category-type-expense">지출</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="category-type" id="category-type-income" value="income">
+                                            <label class="form-check-label" for="category-type-income">수입</label>
+                                        </div>
+                                    </div>
+                                    <button id="add-main-category-btn" class="btn btn-primary">추가</button>
+                                </div>
+                                <div class="col-md-8">
+                                    <h3>대분류 목록</h3>
+                                    <div id="main-category-list"></div>
                                 </div>
                             </div>
-                            <div class="col-md-8">
-                                <div class="card">
-                                    <div class="card-header">등록된 중분류</div>
-                                    <div class="card-body">
-                                        <div id="sub-category-list"></div>
+                        </div>
+                        
+                        <!-- 중분류 탭 -->
+                        <div class="tab-pane fade" id="sub-category" role="tabpanel" aria-labelledby="sub-category-tab">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <h3>중분류 추가</h3>
+                                    <div class="mb-3">
+                                        <label for="sub-category-main" class="form-label">대분류:</label>
+                                        <select id="sub-category-main" class="form-control main-category-selector"></select>
                                     </div>
+                                    <div class="mb-3">
+                                        <label for="sub-category-code" class="form-label">분류 코드:</label>
+                                        <input type="text" id="sub-category-code" placeholder="분류 코드 (예: FOOD)" maxlength="10" class="form-control">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="sub-category-name" class="form-label">분류명:</label>
+                                        <input type="text" id="sub-category-name" placeholder="분류명 (예: 식비)" class="form-control">
+                                    </div>
+                                    <button id="add-sub-category-btn" class="btn btn-primary">추가</button>
+                                </div>
+                                <div class="col-md-8">
+                                    <h3>중분류 목록</h3>
+                                    <div id="sub-category-list"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- 공휴일 관리 탭 -->
-            <div class="tab-content" id="holiday-tab">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card mb-4">
-                            <div class="card-header">공휴일 관리</div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="holiday-year" class="form-label">년도 선택:</label>
-                                    <div class="input-group">
-                                        <select id="holiday-year" class="form-select"></select>
-                                        <button id="add-holiday-year-btn" class="btn btn-outline-secondary">
-                                            <i class="bi bi-plus"></i>
-                                        </button>
-                                        <button id="fetch-holidays-btn" class="btn btn-outline-secondary">
-                                            <i class="bi bi-cloud-download"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">공휴일 추가:</label>
-                                    <div class="input-group mb-2">
-                                        <input type="number" id="holiday-month" placeholder="월" min="1" max="12" class="form-control">
-                                        <input type="number" id="holiday-day" placeholder="일" min="1" max="31" class="form-control">
-                                    </div>
-                                    <div class="input-group">
-                                        <input type="text" id="holiday-name" placeholder="공휴일 이름" class="form-control">
-                                        <button id="add-holiday-btn" class="btn btn-primary">
-                                            <i class="bi bi-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                
+                <!-- 공휴일 관리 탭 -->
+                <div class="tab-pane fade" id="holiday-management-tab" role="tabpanel" aria-labelledby="holiday-management-tab-btn">
+                    <div class="calendar-header mb-4">
+                        <button id="prev-holiday-year-btn" class="btn btn-outline-primary">이전 년도</button>
+                        <h2 id="holiday-year" class="calendar-year">2023</h2>
+                        <button id="next-holiday-year-btn" class="btn btn-outline-primary">다음 년도</button>
                     </div>
-                    <div class="col-md-8">
-                        <div class="card">
-                            <div class="card-header">등록된 공휴일</div>
-                            <div class="card-body">
-                                <div id="holiday-list"></div>
-                            </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h3>공휴일 추가</h3>
+                            <form id="add-holiday-form" class="mb-4">
+                                <div class="mb-3">
+                                    <label for="holiday-date" class="form-label">날짜:</label>
+                                    <input type="date" id="holiday-date" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="holiday-name" class="form-label">공휴일명:</label>
+                                    <input type="text" id="holiday-name" class="form-control" placeholder="공휴일 이름">
+                                </div>
+                                <button type="submit" class="btn btn-primary">추가</button>
+                            </form>
+                        </div>
+                        <div class="col-md-8">
+                            <h3>공휴일 목록</h3>
+                            <div id="holiday-list"></div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- 설정 탭 -->
-            <div class="tab-content" id="settings-tab">
-                <div class="card">
-                    <div class="card-header">데이터 관리</div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="d-grid gap-2">
-                                    <button id="backup-btn" class="btn btn-primary">
-                                        <i class="bi bi-download"></i> 데이터 백업
-                                    </button>
-                                    <button id="excel-btn" class="btn btn-success">
-                                        <i class="bi bi-file-earmark-excel"></i> 엑셀로 내보내기
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="restore-file" class="form-label">데이터 복원:</label>
-                                    <input type="file" id="restore-file" accept=".json" class="form-control">
-                                </div>
-                                <hr>
-                                <div class="d-grid">
-                                    <button id="reset-btn" class="btn btn-danger">
-                                        <i class="bi bi-trash"></i> 데이터 초기화
-                                    </button>
+                
+                <!-- 설정 탭 -->
+                <div class="tab-pane fade" id="settings-tab" role="tabpanel" aria-labelledby="settings-tab-btn">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">데이터 관리</div>
+                                <div class="card-body">
+                                    <p>데이터 백업 및 복원</p>
+                                    <button id="backup-data-btn" class="btn btn-primary mb-2">데이터 백업</button>
+                                    <div class="mb-3">
+                                        <label for="restore-data-file" class="form-label">백업 파일 선택:</label>
+                                        <input type="file" id="restore-data-file" class="form-control">
+                                    </div>
+                                    <button id="restore-data-btn" class="btn btn-warning mb-2">데이터 복원</button>
+                                    <hr>
+                                    <p class="text-danger">데이터 초기화</p>
+                                    <button id="reset-data-btn" class="btn btn-danger">모든 데이터 초기화</button>
                                 </div>
                             </div>
                         </div>
@@ -642,65 +696,68 @@
         </div>
     </div>
     
-    <!-- Bootstrap JS와 팝업 관련 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/category-manager.js"></script>
+    <script src="js/expense-calendar.js"></script>
+    <script src="js/expense-manager.js"></script>
+    <script src="js/holiday-manager.js"></script>
+    <script src="js/app.js"></script>
+    
+    <!-- Bootstrap 탭 수동 초기화 -->
     <script>
-        // 탭 전환 기능
         document.addEventListener('DOMContentLoaded', function() {
-            // 메인 탭 전환 기능
-            const tabButtons = document.querySelectorAll('.tab-btn');
-            const tabContents = document.querySelectorAll('.tab-content');
+            // 메인 탭 이벤트 설정
+            const mainTabButtons = document.querySelectorAll('#mainTab [data-bs-toggle="tab"]');
+            setupTabButtons(mainTabButtons, '#mainTabContent');
             
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const tabName = button.getAttribute('data-tab');
-                    
-                    // 탭 버튼 활성화 상태 변경
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-                    
-                    // 탭 콘텐츠 표시/숨김
-                    tabContents.forEach(content => {
-                        content.classList.remove('active');
-                        if (content.id === `${tabName}-tab`) {
-                            content.classList.add('active');
-                            
-                            // 분류 관리 탭이 활성화되면 기본적으로 대분류 탭 표시
-                            if (tabName === 'category') {
-                                document.querySelector('[data-bs-target="#main-category"]').classList.add('active');
-                                document.getElementById('main-category').classList.add('show', 'active');
-                            }
+            // 중첩된 탭(카테고리 탭) 이벤트 설정
+            const categoryTabButtons = document.querySelectorAll('#categoryTabs [data-bs-toggle="tab"]');
+            setupTabButtons(categoryTabButtons, '#categoryTabContent');
+            
+            // 탭 버튼 기능 초기화 함수
+            function setupTabButtons(buttons, contentSelector) {
+                buttons.forEach(button => {
+                    button.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        
+                        // 같은 그룹 내 모든 탭 버튼 비활성화
+                        buttons.forEach(btn => {
+                            btn.classList.remove('active');
+                            btn.setAttribute('aria-selected', 'false');
+                        });
+                        
+                        // 클릭한 탭 버튼 활성화
+                        this.classList.add('active');
+                        this.setAttribute('aria-selected', 'true');
+                        
+                        // 모든 탭 콘텐츠 숨기기
+                        const contents = document.querySelectorAll(`${contentSelector} .tab-pane`);
+                        contents.forEach(content => {
+                            content.classList.remove('show', 'active');
+                        });
+                        
+                        // 클릭한 탭에 해당하는 콘텐츠 표시
+                        const targetId = this.getAttribute('data-bs-target');
+                        const targetContent = document.querySelector(targetId);
+                        if (targetContent) {
+                            targetContent.classList.add('show', 'active');
                         }
+                        
+                        // 탭 전환 이벤트 발생 (App.js에서 캐치)
+                        const tabEvent = new CustomEvent('shown.bs.tab', {
+                            bubbles: true,
+                            detail: { target: this }
+                        });
+                        this.dispatchEvent(tabEvent);
                     });
                 });
-            });
-            
-            // 분류 관리 내부 탭 전환 (대분류/중분류)
-            const categoryTabs = document.querySelectorAll('[data-bs-toggle="tab"]');
-            categoryTabs.forEach(tab => {
-                tab.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('data-bs-target'));
-                    
-                    // 모든 네비게이션 탭 버튼 비활성화
-                    document.querySelectorAll('.nav-link').forEach(t => 
-                        t.classList.remove('active')
-                    );
-                    
-                    // 모든 탭 콘텐츠 비활성화
-                    document.querySelectorAll('.tab-pane').forEach(p => 
-                        p.classList.remove('show', 'active')
-                    );
-                    
-                    // 선택한 탭 활성화
-                    this.classList.add('active');
-                    if (target) {
-                        target.classList.add('show', 'active');
-                    }
-                });
-            });
+            }
         });
     </script>
-    <script src="script.js"></script>
 </body>
 </html> 
