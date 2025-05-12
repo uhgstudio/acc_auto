@@ -402,6 +402,7 @@ const ExpenseCalendar = {
                                         <th>분류</th>
                                         <th>금액</th>
                                         <th>잔액</th>
+                                        <th>관리</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -515,9 +516,9 @@ const ExpenseCalendar = {
         const initialBalanceRow = document.createElement('tr');
         initialBalanceRow.classList.add('table-light');
         initialBalanceRow.innerHTML = `
-            <td colspan="3"><strong>이전 잔액</strong></td>
-            <td></td>
+            <td colspan="4"><strong>이전 잔액</strong></td>
             <td><strong>${Utils.number.formatCurrency(initialBalance)}</strong></td>
+            <td></td>
         `;
         tbody.appendChild(initialBalanceRow);
         
@@ -532,7 +533,7 @@ const ExpenseCalendar = {
         });
         
         // 지출/수입 항목 추가
-        expenses.forEach(expense => {
+        expenses.forEach((expense, index) => {
             const tr = document.createElement('tr');
             
             // 수입/지출에 따라 스타일 변경
@@ -556,14 +557,80 @@ const ExpenseCalendar = {
                 subCategoryName = subCategory ? ` > ${subCategory.name}` : '';
             }
             
+            // data-index 속성에 실제 데이터 인덱스 저장 (일회성/반복성 지출 구분용)
+            const expenseType = expense.isRecurring ? 'recurring' : 'onetime';
+            const dataIndex = expense.isRecurring 
+                ? DataManager.data.recurringExpenses.findIndex(e => 
+                    e.day === parseInt(expense.date.split('-')[2]) &&
+                    e.description === expense.description &&
+                    e.amount === expense.amount)
+                : DataManager.data.oneTimeExpenses.findIndex(e => 
+                    e.date === expense.date &&
+                    e.description === expense.description &&
+                    e.amount === expense.amount);
+            
+            tr.setAttribute('data-expense-type', expenseType);
+            tr.setAttribute('data-expense-index', dataIndex);
+            
             tr.innerHTML = `
                 <td>${expense.date}${expense.isRecurring ? ' <small>(정기)</small>' : ''}</td>
                 <td>${expense.description}</td>
                 <td>${expense.mainCategoryName}${subCategoryName}</td>
                 <td class="${amountClass}">${amountPrefix}${Utils.number.formatCurrency(expense.amount)}</td>
                 <td class="${balanceClass}">${Utils.number.formatCurrency(runningBalance)}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary btn-edit-expense" title="수정">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-delete-expense" title="삭제">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
             `;
             tbody.appendChild(tr);
+            
+            // 수정 버튼 이벤트
+            tr.querySelector('.btn-edit-expense').addEventListener('click', () => {
+                // 정기 지출은 수정 불가 (복잡한 처리 필요)
+                if (expense.isRecurring) {
+                    alert('정기 지출은 반복 지출 탭에서 수정해주세요.');
+                    return;
+                }
+                
+                // 일회성 지출 수정 팝업 표시
+                this.showEditExpenseForm(dataIndex, expense, month);
+            });
+            
+            // 삭제 버튼 이벤트
+            tr.querySelector('.btn-delete-expense').addEventListener('click', () => {
+                if (confirm('이 항목을 삭제하시겠습니까?')) {
+                    try {
+                        if (expense.isRecurring) {
+                            // 반복 지출 삭제
+                            DataManager.removeRecurringExpense(dataIndex);
+                        } else {
+                            // 일회성 지출 삭제
+                            DataManager.removeOneTimeExpense(dataIndex);
+                        }
+                        
+                        // 성공 메시지
+                        alert('항목이 삭제되었습니다.');
+                        
+                        // 달력 갱신
+                        this.renderCalendar();
+                        
+                        // 상세보기 팝업 닫기
+                        popup.remove();
+                        
+                        // 지출 데이터 변경 이벤트 발생
+                        document.dispatchEvent(new CustomEvent('expenses-updated'));
+                    } catch (error) {
+                        alert('삭제 중 오류가 발생했습니다: ' + error.message);
+                    }
+                }
+            });
         });
         
         // 최종 잔액 행 추가
@@ -573,9 +640,9 @@ const ExpenseCalendar = {
         const finalBalanceClass = runningBalance >= 0 ? 'text-primary' : 'text-danger';
         
         finalBalanceRow.innerHTML = `
-            <td colspan="3"><strong>최종 잔액</strong></td>
-            <td></td>
+            <td colspan="4"><strong>최종 잔액</strong></td>
             <td class="${finalBalanceClass}"><strong>${Utils.number.formatCurrency(runningBalance)}</strong></td>
+            <td></td>
         `;
         tbody.appendChild(finalBalanceRow);
         
@@ -640,6 +707,161 @@ const ExpenseCalendar = {
                 subCategorySummary.appendChild(tr);
             }
         }
+    },
+    
+    // 지출 수정 폼 표시
+    showEditExpenseForm(expenseId, expense, month) {
+        // 기존 팝업 제거
+        const existingPopup = document.getElementById('edit-expense-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+        
+        // 팝업 컨테이너 생성
+        const popup = document.createElement('div');
+        popup.id = 'edit-expense-popup';
+        popup.className = 'expense-popup';
+        
+        // 팝업 내용 생성
+        popup.innerHTML = `
+            <div class="popup-content">
+                <div class="popup-header">
+                    <h3>지출/수입 항목 수정</h3>
+                    <button id="close-edit-expense-popup" class="close-popup-btn">&times;</button>
+                </div>
+                <div class="popup-body">
+                    <form id="edit-expense-form">
+                        <input type="hidden" id="expense-id" value="${expenseId}">
+                        <div class="mb-3">
+                            <label for="edit-expense-date" class="form-label">날짜:</label>
+                            <input type="date" id="edit-expense-date" class="form-control" value="${expense.date}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-expense-amount" class="form-label">금액:</label>
+                            <input type="number" id="edit-expense-amount" class="form-control" value="${expense.amount}" placeholder="금액" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-expense-description" class="form-label">내용:</label>
+                            <input type="text" id="edit-expense-description" class="form-control" value="${expense.description}" placeholder="지출 내용" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-expense-main-category" class="form-label">대분류:</label>
+                            <select id="edit-expense-main-category" class="form-control main-category-selector" required data-selected="${expense.mainCategory}"></select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-expense-sub-category" class="form-label">중분류:</label>
+                            <select id="edit-expense-sub-category" class="form-control sub-category-selector" data-selected="${expense.subCategory || ''}"></select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </form>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(popup);
+        
+        // 닫기 버튼 이벤트
+        popup.querySelector('#close-edit-expense-popup').addEventListener('click', () => {
+            popup.remove();
+        });
+        
+        // ESC 키로 팝업 닫기
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                popup.remove();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+        
+        // 팝업 외부 클릭시 닫기
+        popup.addEventListener('click', (e) => {
+            if (e.target === popup) {
+                popup.remove();
+            }
+        });
+        
+        // 대분류 선택기 초기화 및 선택된 값 설정
+        CategoryManager.updateMainCategorySelectors();
+        
+        // 선택된 대분류 설정
+        const mainCategorySelect = document.getElementById('edit-expense-main-category');
+        if (mainCategorySelect) {
+            mainCategorySelect.value = expense.mainCategory;
+            
+            // 대분류에 맞는 중분류 옵션 업데이트
+            const subCategorySelect = document.getElementById('edit-expense-sub-category');
+            CategoryManager.populateSubCategorySelector(expense.mainCategory, subCategorySelect);
+            
+            // 선택된 중분류 설정
+            if (expense.subCategory && subCategorySelect) {
+                subCategorySelect.value = expense.subCategory;
+            }
+            
+            // 대분류 변경 시 중분류 옵션 업데이트
+            mainCategorySelect.addEventListener('change', () => {
+                const mainCode = mainCategorySelect.value;
+                if (mainCode) {
+                    CategoryManager.populateSubCategorySelector(mainCode, subCategorySelect);
+                } else {
+                    // 대분류가 선택되지 않은 경우 중분류 초기화
+                    Utils.dom.clearElement(subCategorySelect);
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = '중분류 선택';
+                    subCategorySelect.appendChild(defaultOption);
+                }
+            });
+        }
+        
+        // 폼 제출 이벤트
+        const editExpenseForm = popup.querySelector('#edit-expense-form');
+        editExpenseForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const id = parseInt(document.getElementById('expense-id').value);
+            const date = document.getElementById('edit-expense-date').value;
+            const amount = document.getElementById('edit-expense-amount').value;
+            const description = document.getElementById('edit-expense-description').value;
+            const mainCategory = document.getElementById('edit-expense-main-category').value;
+            const subCategory = document.getElementById('edit-expense-sub-category').value;
+            
+            // 빈 필드 확인
+            if (!date || !amount || !description || !mainCategory) {
+                alert('모든 필수 필드를 입력해주세요.');
+                return;
+            }
+            
+            try {
+                // 일회성 지출 수정
+                DataManager.updateOneTimeExpense(id, date, parseFloat(amount), description, mainCategory, subCategory);
+                
+                // 달력 갱신
+                this.renderCalendar();
+                
+                // 지출 데이터 변경 이벤트 발생
+                document.dispatchEvent(new CustomEvent('expenses-updated'));
+                
+                // 성공 메시지
+                alert('항목이 수정되었습니다.');
+                
+                // 상세보기 팝업 다시 표시
+                popup.remove();
+                
+                // 기존 상세보기 팝업 닫기
+                const detailPopup = document.getElementById('expense-detail-popup');
+                if (detailPopup) {
+                    detailPopup.remove();
+                }
+                
+                // 새로운 지출 항목 리스트로 상세보기 팝업 다시 표시
+                const updatedExpenses = this.getMonthlyExpenses(DataManager.data.year, month);
+                this.showExpenseDetail(month, updatedExpenses);
+                
+            } catch (error) {
+                alert('수정 중 오류가 발생했습니다: ' + error.message);
+            }
+        });
     },
     
     // 달력 이벤트 리스너 설정

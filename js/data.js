@@ -255,6 +255,52 @@ const DataManager = {
         return this.data.oneTimeExpenses;
     },
 
+    // 일회성 지출 수정
+    updateOneTimeExpense(id, date, amount, description, mainCategory, subCategory) {
+        // id로 항목 찾기 (일회성 지출의 경우 id는 인덱스로 사용)
+        if (id < 0 || id >= this.data.oneTimeExpenses.length) {
+            throw new Error('유효하지 않은 항목 ID입니다.');
+        }
+        
+        // 수정된 항목으로 업데이트
+        this.data.oneTimeExpenses[id] = {
+            date,
+            amount: parseFloat(amount),
+            description,
+            mainCategory,
+            subCategory: subCategory || null
+        };
+        
+        // 데이터 저장
+        this.saveData();
+        
+        return this.data.oneTimeExpenses[id];
+    },
+
+    // 반복 지출 수정
+    updateRecurringExpense(id, day, amount, description, startDate, endDate, mainCategory, subCategory) {
+        // id로 항목 찾기 (반복 지출의 경우 id는 인덱스로 사용)
+        if (id < 0 || id >= this.data.recurringExpenses.length) {
+            throw new Error('유효하지 않은 항목 ID입니다.');
+        }
+        
+        // 수정된 항목으로 업데이트
+        this.data.recurringExpenses[id] = {
+            day: parseInt(day),
+            amount: parseFloat(amount),
+            description,
+            startDate,
+            endDate: endDate || null,
+            mainCategory,
+            subCategory: subCategory || null
+        };
+        
+        // 데이터 저장
+        this.saveData();
+        
+        return this.data.recurringExpenses[id];
+    },
+
     // 기준 년도 변경
     changeYear(year) {
         this.data.year = parseInt(year);

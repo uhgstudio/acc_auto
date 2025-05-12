@@ -1,0 +1,184 @@
+{
+  "recurringExpenses": [
+    {
+      "day": 5,
+      "amount": 1500000,
+      "description": "출연료",
+      "startDate": "2025-05",
+      "endDate": "2025-11",
+      "mainCategory": "CASH_DEPOSIT",
+      "subCategory": ""
+    },
+    {
+      "day": 10,
+      "amount": 2500000,
+      "description": "월급",
+      "startDate": "2025-01",
+      "endDate": null,
+      "mainCategory": "INCOME",
+      "subCategory": "SALES"
+    },
+    {
+      "day": 15,
+      "amount": 850000,
+      "description": "사무실 임대료",
+      "startDate": "2025-01",
+      "endDate": null,
+      "mainCategory": "ADMIN",
+      "subCategory": "RENT"
+    },
+    {
+      "day": 20,
+      "amount": 120000,
+      "description": "공과금",
+      "startDate": "2025-01",
+      "endDate": null,
+      "mainCategory": "FIXED_CHARGE",
+      "subCategory": "UTILITY"
+    },
+    {
+      "day": 25,
+      "amount": 350000,
+      "description": "대출 상환",
+      "startDate": "2025-01",
+      "endDate": "2025-08",
+      "mainCategory": "INVESTMENT",
+      "subCategory": "OFFICE_LOAN"
+    }
+  ],
+  "oneTimeExpenses": [
+    {"date": "2025-01-07", "amount": 1200000, "description": "카드매출 입금", "mainCategory": "CARD_SALES", "subCategory": "CARD_KB"},
+    {"date": "2025-01-15", "amount": 234500, "description": "사무용품 구매", "mainCategory": "ADMIN", "subCategory": "SUPPLY"},
+    {"date": "2025-01-23", "amount": 587000, "description": "세금 납부", "mainCategory": "TAX", "subCategory": "VAT"},
+    
+    {"date": "2025-02-01", "amount": 1200000, "description": "신년 보너스", "mainCategory": "INCOME", "subCategory": "SALES"},
+    {"date": "2025-02-13", "amount": 784783, "description": "부가세 납부", "mainCategory": "TAX", "subCategory": "VAT"},
+    {"date": "2025-02-18", "amount": 1275000, "description": "카드매출 입금", "mainCategory": "CARD_SALES", "subCategory": "CARD_KB"},
+    {"date": "2025-02-27", "amount": 325000, "description": "직원 식대", "mainCategory": "LABOR", "subCategory": ""},
+    
+    {"date": "2025-03-05", "amount": 1500000, "description": "카드매출 입금", "mainCategory": "CARD_SALES", "subCategory": "CARD_NH"},
+    {"date": "2025-03-18", "amount": 970000, "description": "장비 구매", "mainCategory": "ADMIN", "subCategory": "SUPPLY"},
+    {"date": "2025-03-25", "amount": 450000, "description": "마케팅 비용", "mainCategory": "RETAIL", "subCategory": "ADVERTISING"},
+    
+    {"date": "2025-04-02", "amount": 1200000, "description": "카드매출 입금", "mainCategory": "CARD_SALES", "subCategory": "CARD_SHINHAN"},
+    {"date": "2025-04-12", "amount": 670000, "description": "세금 납부", "mainCategory": "TAX", "subCategory": "INCOME_TAX"},
+    {"date": "2025-04-22", "amount": 380000, "description": "유지보수 비용", "mainCategory": "ADMIN", "subCategory": "CLEANING"},
+    
+    {"date": "2025-05-03", "amount": 1450000, "description": "카드매출 입금", "mainCategory": "CARD_SALES", "subCategory": "CARD_HYUNDAI"},
+    {"date": "2025-05-14", "amount": 920000, "description": "보험료", "mainCategory": "FINANCE", "subCategory": ""},
+    {"date": "2025-05-28", "amount": 550000, "description": "홍보 행사 비용", "mainCategory": "RETAIL", "subCategory": "ADVERTISING"},
+    
+    {"date": "2025-06-01", "amount": 1600000, "description": "여름 보너스", "mainCategory": "INCOME", "subCategory": "SALES"},
+    {"date": "2025-06-15", "amount": 430000, "description": "냉방 시설 점검", "mainCategory": "RETAIL", "subCategory": "AIRCON"},
+    {"date": "2025-06-24", "amount": 285000, "description": "사무실 비품", "mainCategory": "ADMIN", "subCategory": "SUPPLY"},
+    
+    {"date": "2025-07-08", "amount": 1350000, "description": "카드매출 입금", "mainCategory": "CARD_SALES", "subCategory": "CARD_BC"},
+    {"date": "2025-07-17", "amount": 780000, "description": "세미나 참가비", "mainCategory": "RETAIL", "subCategory": "SALES_PROM"},
+    {"date": "2025-07-29", "amount": 520000, "description": "차량 유지비", "mainCategory": "ADMIN", "subCategory": "VEHICLE"},
+    
+    {"date": "2025-08-04", "amount": 1550000, "description": "카드매출 입금", "mainCategory": "CARD_SALES", "subCategory": "CARD_LOTTE"},
+    {"date": "2025-08-12", "amount": 675000, "description": "세금 납부", "mainCategory": "TAX", "subCategory": "PROPERTY_TAX"},
+    {"date": "2025-08-22", "amount": 340000, "description": "소프트웨어 갱신", "mainCategory": "RETAIL", "subCategory": "SOFTWARE"},
+    
+    {"date": "2025-09-02", "amount": 1650000, "description": "카드매출 입금", "mainCategory": "CARD_SALES", "subCategory": "CARD_SAMSUNG"},
+    {"date": "2025-09-16", "amount": 420000, "description": "사무실 수리", "mainCategory": "ADMIN", "subCategory": "CLEANING"},
+    {"date": "2025-09-27", "amount": 390000, "description": "직원 교육비", "mainCategory": "LABOR", "subCategory": ""},
+    
+    {"date": "2025-10-05", "amount": 1750000, "description": "추석 보너스", "mainCategory": "INCOME", "subCategory": "SALES"},
+    {"date": "2025-10-19", "amount": 630000, "description": "물품 구매", "mainCategory": "RETAIL", "subCategory": "WHOLESALE_FEE"},
+    {"date": "2025-10-30", "amount": 480000, "description": "보안 시스템 점검", "mainCategory": "RETAIL", "subCategory": "SECURITY"},
+    
+    {"date": "2025-11-07", "amount": 1800000, "description": "카드매출 입금", "mainCategory": "CARD_SALES", "subCategory": "CARD_KB"},
+    {"date": "2025-11-16", "amount": 710000, "description": "세금 납부", "mainCategory": "TAX", "subCategory": "VAT"},
+    {"date": "2025-11-25", "amount": 360000, "description": "난방 시설 점검", "mainCategory": "ADMIN", "subCategory": "UTILITY"},
+    
+    {"date": "2025-12-01", "amount": 2500000, "description": "연말 보너스", "mainCategory": "INCOME", "subCategory": "SALES"},
+    {"date": "2025-12-10", "amount": 850000, "description": "직원 선물", "mainCategory": "LABOR", "subCategory": ""},
+    {"date": "2025-12-15", "amount": 930000, "description": "카드매출 입금", "mainCategory": "CARD_SALES", "subCategory": "CARD_NH"},
+    {"date": "2025-12-22", "amount": 1200000, "description": "연말정산 환급금", "mainCategory": "OTHER_INCOME", "subCategory": ""},
+    {"date": "2025-12-28", "amount": 690000, "description": "송년회 비용", "mainCategory": "RETAIL", "subCategory": "SALES_PROM"}
+  ],
+  "year": 2025,
+  "holidays": {
+    "2025": [
+      {"month": 1, "day": 1, "name": "신정"},
+      {"month": 2, "day": 1, "name": "설날"},
+      {"month": 2, "day": 2, "name": "설날 연휴"},
+      {"month": 3, "day": 1, "name": "삼일절"},
+      {"month": 5, "day": 5, "name": "어린이날"},
+      {"month": 5, "day": 8, "name": "부처님오신날"},
+      {"month": 6, "day": 6, "name": "현충일"},
+      {"month": 8, "day": 15, "name": "광복절"},
+      {"month": 9, "day": 16, "name": "추석"},
+      {"month": 9, "day": 17, "name": "추석 연휴"},
+      {"month": 10, "day": 3, "name": "개천절"},
+      {"month": 10, "day": 9, "name": "한글날"},
+      {"month": 12, "day": 25, "name": "크리스마스"}
+    ]
+  },
+  "categories": {
+    "main": [
+      {"code": "INCOME", "name": "수입", "type": "income"},
+      {"code": "CARD_SALES", "name": "카드 매출", "type": "income"},
+      {"code": "CASH_DEPOSIT", "name": "현금입금", "type": "income"},
+      {"code": "OTHER_INCOME", "name": "기타입금", "type": "income"},
+      {"code": "EXPENSE", "name": "지출", "type": "expense"},
+      {"code": "LABOR", "name": "인건비", "type": "expense"},
+      {"code": "ADMIN", "name": "관리비", "type": "expense"},
+      {"code": "TAX", "name": "세금", "type": "expense"},
+      {"code": "FINANCE", "name": "금융지출", "type": "expense"},
+      {"code": "FIXED_CHARGE", "name": "공과금", "type": "expense"},
+      {"code": "MEMBERSHIP", "name": "멤버쉽카드", "type": "expense"},
+      {"code": "RETAIL", "name": "판매관리비", "type": "expense"},
+      {"code": "INVESTMENT", "name": "기타출금", "type": "expense"}
+    ],
+    "sub": [
+      {"mainCode": "CARD_SALES", "code": "CARD_KB", "name": "매출-KB"},
+      {"mainCode": "CARD_SALES", "code": "CARD_NH", "name": "매출-NH"},
+      {"mainCode": "CARD_SALES", "code": "CARD_LOTTE", "name": "매출-롯데"},
+      {"mainCode": "CARD_SALES", "code": "CARD_HANA", "name": "매출-하나"},
+      {"mainCode": "CARD_SALES", "code": "CARD_SAMSUNG", "name": "매출-삼성"},
+      {"mainCode": "CARD_SALES", "code": "CARD_SHINHAN", "name": "매출-신한"},
+      {"mainCode": "CARD_SALES", "code": "CARD_HYUNDAI", "name": "매출-현대"},
+      {"mainCode": "CARD_SALES", "code": "CARD_BC", "name": "매출-BC카드"},
+      {"mainCode": "ADMIN", "code": "RENT", "name": "임대료"},
+      {"mainCode": "ADMIN", "code": "UTILITY", "name": "공공/전기/통신료 등"},
+      {"mainCode": "ADMIN", "code": "CLEANING", "name": "청소"},
+      {"mainCode": "ADMIN", "code": "SUPPLY", "name": "전자제품/부자재"},
+      {"mainCode": "ADMIN", "code": "VEHICLE", "name": "차량유지"},
+      {"mainCode": "TAX", "code": "VAT", "name": "부가가치세"},
+      {"mainCode": "TAX", "code": "INCOME_TAX", "name": "갑종-근로"},
+      {"mainCode": "TAX", "code": "CORPORATE_TAX", "name": "갑종-글로벌교"},
+      {"mainCode": "TAX", "code": "PROPERTY_TAX", "name": "갑종-종대생성"},
+      {"mainCode": "TAX", "code": "LOCAL_TAX", "name": "갑종-오아마비스"},
+      {"mainCode": "TAX", "code": "REGISTRATION_TAX", "name": "갑종-에메트"},
+      {"mainCode": "TAX", "code": "OTHER_TAX", "name": "갑종-원두"},
+      {"mainCode": "TAX", "code": "FRANCHISE_TAX", "name": "갑종-아몬드젤리"},
+      {"mainCode": "TAX", "code": "SALES_TAX", "name": "갑종-전성"},
+      {"mainCode": "TAX", "code": "PUBLIC_TAX", "name": "갑종-전선물건"},
+      {"mainCode": "TAX", "code": "BUSINESS_TAX", "name": "갑종-커피원빈지"},
+      {"mainCode": "TAX", "code": "SERVICE_TAX", "name": "갑종-피피스"},
+      {"mainCode": "TAX", "code": "LUXURY_TAX", "name": "갑종-플라또"},
+      {"mainCode": "TAX", "code": "ALCOHOL_TAX", "name": "갑종-홀추"},
+      {"mainCode": "FIXED_CHARGE", "code": "POSTAL", "name": "우체국등"},
+      {"mainCode": "FIXED_CHARGE", "code": "STARBUCKS", "name": "스타벅스카드 외"},
+      {"mainCode": "MEMBERSHIP", "code": "MEMBER_CARD", "name": "멤버쉽카드"},
+      {"mainCode": "RETAIL", "code": "WHOLESALE_FEE", "name": "지급장려(집중품)"},
+      {"mainCode": "RETAIL", "code": "RETAIL_FEE", "name": "지급장려(영산품)"},
+      {"mainCode": "RETAIL", "code": "TRANSIT", "name": "운반비"},
+      {"mainCode": "RETAIL", "code": "LGU", "name": "LGU"},
+      {"mainCode": "RETAIL", "code": "AIRCON", "name": "에어컨"},
+      {"mainCode": "RETAIL", "code": "LIGHTING", "name": "조명"},
+      {"mainCode": "RETAIL", "code": "SECURITY", "name": "보안"},
+      {"mainCode": "RETAIL", "code": "POS", "name": "세무대행"},
+      {"mainCode": "RETAIL", "code": "SOFTWARE", "name": "세스코"},
+      {"mainCode": "RETAIL", "code": "SALES_PROM", "name": "인시용품"},
+      {"mainCode": "RETAIL", "code": "ADVERTISING", "name": "아르질"},
+      {"mainCode": "INVESTMENT", "code": "MARKET", "name": "마켓증가"},
+      {"mainCode": "INVESTMENT", "code": "TRANSFER", "name": "지타증가"},
+      {"mainCode": "INVESTMENT", "code": "HOME_LOAN", "name": "자택담"},
+      {"mainCode": "INVESTMENT", "code": "OFFICE_LOAN", "name": "대출 상환"},
+      {"mainCode": "INCOME", "code": "SALES", "name": "수입"}
+    ]
+  }
+}
