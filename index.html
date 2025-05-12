@@ -4,23 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>연간 지출 관리 앱</title>
+    <!-- 테마 초기화를 위한 인라인 스크립트 -->
+    <script>
+        // 페이지 로드 전 테마 적용하여 깜빡임 방지
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'default';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
         :root {
-            --primary-color: #4CAF50;
-            --primary-dark: #388E3C;
-            --primary-light: #A5D6A7;
-            --accent-color: #2196F3;
-            --dark-color: #343a40;
-            --light-color: #f8f9fa;
-            --border-color: #dee2e6;
+            --primary-color: #e3b9d6;
+            --primary-dark: #b792ad;
+            --primary-light: #f2e1ec;
+            --accent-color: #9a7592;
+            --dark-color: #4a4a4a;
+            --light-color: #fef4fa;
+            --border-color: #e8d7e2;
+            --text-color: #555555;
+            --text-muted: #888888;
+        }
+        
+        /* 테마 색상 변수 정의 */
+        [data-theme="blue"] {
+            --primary-color: #90caf9;
+            --primary-dark: #64b5f6;
+            --primary-light: #e3f2fd;
+            --accent-color: #42a5f5;
+            --light-color: #e3f2fd;
+            --border-color: #bbdefb;
+        }
+
+        [data-theme="green"] {
+            --primary-color: #a5d6a7;
+            --primary-dark: #81c784;
+            --primary-light: #e8f5e9;
+            --accent-color: #66bb6a;
+            --light-color: #e8f5e9;
+            --border-color: #c8e6c9;
+        }
+
+        [data-theme="orange"] {
+            --primary-color: #ffcc80;
+            --primary-dark: #ffb74d;
+            --primary-light: #fff8e1;
+            --accent-color: #ffa726;
+            --light-color: #fff8e1;
+            --border-color: #ffe0b2;
+        }
+
+        [data-theme="purple"] {
+            --primary-color: #b39ddb;
+            --primary-dark: #9575cd;
+            --primary-light: #ede7f6;
+            --accent-color: #7e57c2;
+            --light-color: #ede7f6;
+            --border-color: #d1c4e9;
         }
         
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
+            background-color: #faf5f8;
+            color: var(--text-color);
         }
         
         .app-container {
@@ -43,7 +90,7 @@
         .app-header h1 {
             margin: 0;
             font-size: 24px;
-            color: var(--primary-color);
+            color: var(--primary-dark);
         }
         
         .summary-pills {
@@ -71,7 +118,7 @@
             background-color: white;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
             margin-bottom: 25px;
             display: flex;
             justify-content: space-between;
@@ -110,13 +157,13 @@
         
         .modern-tabs-link.active {
             color: var(--primary-color);
-            background-color: #f8fff8;
+            background-color: var(--light-color);
             border-bottom: 3px solid var(--primary-color);
         }
         
         .modern-tabs-link:hover:not(.active) {
             color: var(--primary-dark);
-            background-color: rgba(76, 175, 80, 0.05);
+            background-color: rgba(0, 0, 0, 0.05);
         }
         
         /* 반응형 처리 */
@@ -128,12 +175,12 @@
             .modern-tabs-link {
                 padding: 12px 15px;
                 text-align: left;
-                border-bottom: 1px solid #f0f0f0;
+                border-bottom: 1px solid #f0e8ef;
                 border-left: 3px solid transparent;
             }
             
             .modern-tabs-link.active {
-                border-bottom: 1px solid #f0f0f0;
+                border-bottom: 1px solid #f0e8ef;
                 border-left: 3px solid var(--primary-color);
             }
         }
@@ -141,7 +188,7 @@
         .tab-container {
             background-color: white;
             border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(227,185,214,0.15);
             overflow: hidden;
         }
         
@@ -150,7 +197,7 @@
             padding: 25px;
             background-color: white;
             border-radius: 10px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 15px rgba(227,185,214,0.1);
             margin-bottom: 30px;
         }
         
@@ -187,7 +234,7 @@
         /* 하위 탭(분류 관리 등)에 대한 별도 스타일 */
         .sub-tabs {
             margin-bottom: 20px;
-            border-bottom: 1px solid #dee2e6;
+            border-bottom: 1px solid var(--border-color);
         }
         
         .sub-tabs .nav-link {
@@ -202,11 +249,11 @@
         .sub-tabs .nav-link.active {
             color: var(--primary-color);
             background-color: #fff;
-            border-color: #dee2e6 #dee2e6 #fff;
+            border-color: var(--border-color) var(--border-color) #fff;
         }
         
         .sub-tabs .nav-link:hover:not(.active) {
-            border-color: #e9ecef #e9ecef #dee2e6;
+            border-color: #f2e6ee #f2e6ee var(--border-color);
         }
         
         .month-grid {
@@ -323,6 +370,15 @@
             cursor: pointer;
         }
         
+        /* 부트스트랩 색상 재정의 */
+        .text-primary {
+            color: var(--accent-color) !important;
+        }
+        
+        .text-danger {
+            color: #e57373 !important;
+        }
+        
         /* 모달 스타일 */
         .expense-popup {
             position: fixed;
@@ -344,12 +400,12 @@
             max-width: 900px;
             max-height: 90vh;
             overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
         .popup-header {
             background-color: var(--primary-color);
-            color: white;
+            color: #fff;
             padding: 15px 20px;
             display: flex;
             justify-content: space-between;
@@ -373,12 +429,35 @@
         /* 팝업 내부 탭 스타일 */
         .popup-body .nav-tabs {
             margin-bottom: 20px;
+            border-bottom-color: var(--border-color);
+        }
+        
+        .popup-body .nav-link {
+            color: var(--text-color);
+        }
+        
+        .popup-body .nav-link.active {
+            color: var(--primary-color);
+            border-color: var(--border-color) var(--border-color) #fff;
+        }
+        
+        .popup-body .nav-link:hover:not(.active) {
+            border-color: var(--primary-light) var(--primary-light) var(--border-color);
         }
         
         .popup-body .summary-container h4 {
             margin-top: 20px;
             margin-bottom: 10px;
             color: var(--primary-color);
+        }
+        
+        /* 테이블 스타일 */
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        .table-light {
+            background-color: var(--light-color);
         }
         
         /* 달력 그리드 스타일 개선 */
@@ -393,7 +472,7 @@
             background-color: white;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(227,185,214,0.15);
         }
         
         .calendar-header {
@@ -409,7 +488,7 @@
             margin: 0;
             font-size: 24px;
             font-weight: bold;
-            color: var(--primary-color);
+            color: var(--primary-dark);
         }
         
         .summary-table {
@@ -428,12 +507,12 @@
         
         .summary-table th {
             font-weight: bold;
-            background-color: #f5f5f5;
+            background-color: var(--primary-light);
         }
         
         .summary-total {
             font-weight: bold;
-            background-color: #f9f9f9;
+            background-color: var(--light-color);
         }
         
         .detail-btn {
@@ -456,7 +535,7 @@
             padding: 20px;
             font-style: italic;
             color: #666;
-            background-color: #f8f9fa;
+            background-color: #faf5f8;
             border-radius: 5px;
             margin: 15px 0;
         }
@@ -468,35 +547,35 @@
         }
         
         .footer hr {
-            border-color: #eaeaea;
+            border-color: #f2d8eb;
         }
         
         .footer .text-muted {
-            color: #888 !important;
+            color: #999 !important;
         }
         
         .footer .creator-name {
             font-weight: 600;
-            color: #555;
+            color: var(--text-color);
             transition: all 0.3s ease;
             display: inline-block;
             padding: 0.35rem 1rem;
             border-radius: 50px;
-            background-color: #f8f9fa;
-            border: 1px solid #eee;
+            background-color: #faf5f8;
+            border: 1px solid #f2d8eb;
         }
         
         .footer .creator-name:hover {
             color: var(--primary-color);
-            background-color: #f0f7f0;
+            background-color: #f8e6f2;
             transform: translateY(-2px);
-            box-shadow: 0 3px 10px rgba(76, 175, 80, 0.15);
+            box-shadow: 0 3px 10px rgba(227, 185, 214, 0.25);
         }
         
         .footer .heart-icon {
             display: inline-block;
             animation: heartbeat 1.5s infinite ease-in-out;
-            color: #ff5252;
+            color: #d47c7c;
             margin: 0 3px;
         }
         
@@ -512,17 +591,352 @@
         /* 이월 잔액 스타일 */
         .carryover-info {
             padding: 5px 10px;
-            background-color: #f8f9fa;
+            background-color: var(--light-color);
             border-radius: 4px;
             margin-bottom: 10px;
-            border-left: 3px solid #ddd;
+            border-left: 3px solid var(--border-color);
         }
         
         .final-balance-info {
-            background-color: #f8fff8;
-            border: 1px dashed #ccc;
+            background-color: var(--light-color);
+            border: 1px dashed var(--border-color);
             border-radius: 4px;
             padding: 5px 0;
+        }
+        
+        /* 버튼 스타일 재정의 */
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            color: white;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-sm.btn-success {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-sm.btn-success:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        .btn-warning {
+            background-color: #ffb74d;
+            border-color: #ffb74d;
+        }
+        
+        .btn-warning:hover {
+            background-color: #ffa726;
+            border-color: #ffa726;
+        }
+        
+        .btn-danger {
+            background-color: #e57373;
+            border-color: #e57373;
+        }
+        
+        .btn-danger:hover {
+            background-color: #ef5350;
+            border-color: #ef5350;
+        }
+        
+        .btn-sm.btn-outline-primary {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        /* 자금수지 스타일 */
+        .finance-container {
+            margin-bottom: 30px;
+        }
+        
+        .finance-container .card {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 15px rgba(227,185,214,0.15);
+        }
+        
+        .finance-container .card-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        #finance-statement-table {
+            margin-bottom: 0;
+        }
+        
+        #finance-statement-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            vertical-align: middle;
+            font-size: 0.9rem;
+        }
+        
+        #finance-statement-table td {
+            vertical-align: middle;
+            font-size: 0.9rem;
+            /*position: relative;*/
+        }
+        
+        .finance-row-main {
+            background-color: #f7f1f5;
+            font-weight: 600;
+        }
+        
+        .finance-row-sub {
+            padding-left: 25px !important;
+        }
+        
+        .finance-row-sub:before {
+            content: "-";
+            position: absolute;
+            left: 15px;
+        }
+        
+        .finance-row-total {
+            background-color: var(--light-color);
+            font-weight: 700;
+        }
+        
+        .finance-row-subtotal {
+            background-color: #faf8fb;
+            font-weight: 600;
+        }
+        
+        .finance-negative {
+            color: #e57373;
+        }
+        
+        .finance-positive {
+            color: var(--accent-color);
+        }
+        
+        /* 자금수지 테이블 UI 개선: 구분 열 넓이 증가, 구분과 합계 열 고정, 나머지 열은 가로 스크롤 가능하도록 변경 */
+        .finance-table-wrapper {
+            position: relative;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 70vh; /* 화면 높이의 70%까지만 표시 */
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            border-radius: 8px;
+        }
+        
+        .finance-statement-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid #dee2e6;
+        }
+        
+        .finance-statement-table th,
+        .finance-statement-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            height: 38px; /* 일정한 높이 설정 */
+            vertical-align: middle;
+            /*position: relative;*/
+        }
+        
+        /* 금액 셀 스타일 개선 - 긴 숫자도 잘 표시되도록 */
+        .finance-statement-table td.text-end {
+            font-size: 0.83rem; /* 숫자 셀의 글꼴 크기 약간 더 축소 */
+            padding-left: 2px;
+            padding-right: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: right;
+        }
+        
+        /* 금액 표시가 서로 잘 정렬되도록 개선 */
+        .finance-statement-table td.text-end.finance-positive,
+        .finance-statement-table td.text-end.finance-negative {
+            font-weight: 600;
+            letter-spacing: -0.5px; /* 글자 간격 약간 좁게 */
+        }
+        
+        .finance-statement-table th:nth-child(1) {
+            width: 250px; /* 구분 열 넓이 증가 */
+            z-index: 3;
+        }
+        
+        .finance-statement-table th:nth-child(2) {
+            width: 150px; /* 합계 열 */
+            z-index: 2;
+        }
+        
+        .finance-statement-table th:nth-child(n+3) {
+            width: 150px; /* 월별 열 너비 더 증가 (120px → 150px) */
+            z-index: 1;
+        }
+        
+        .finance-statement-table td:nth-child(n+3) {
+            width: 150px; /* 월별 셀 너비 명시적 설정 */
+            min-width: 150px; /* 최소 너비 지정 */
+        }
+        
+        .finance-sticky-col {
+            position: sticky;
+            z-index: 1;
+            box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
+            background-color: inherit; /* 배경색 유지하여 겹침 방지 */
+        }
+        
+        .finance-first-col {
+            left: 0;
+            z-index: 2;
+        }
+        
+        .finance-second-col {
+            left: 250px; /* 첫 번째 열 넓이와 같게 설정 */
+            z-index: 1;
+        }
+        
+        /* 행 유형별 배경색 */
+        .finance-row-total td {
+            background-color: var(--light-color);
+        }
+        
+        .finance-row-main td {
+            background-color: #f7f1f5;
+        }
+        
+        .finance-row-subtotal td {
+            background-color: #faf8fb;
+        }
+        
+        /* 고정 열에 배경색 다시 적용 (z-index로 인해 덮어씌우기) */
+        .finance-row-total td.finance-sticky-col {
+            background-color: var(--light-color);
+        }
+        
+        .finance-row-main td.finance-sticky-col {
+            background-color: #f7f1f5;
+        }
+        
+        .finance-row-subtotal td.finance-sticky-col {
+            background-color: #faf8fb;
+        }
+        
+        /* 일반 행 고정 열에도 배경색 적용 */
+        tr:not(.finance-row-total):not(.finance-row-main):not(.finance-row-subtotal) td.finance-sticky-col {
+            background-color: white;
+        }
+        
+        /* 테이블 헤더 스타일링 */
+        .finance-statement-table thead th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        
+        .finance-statement-table thead th.finance-sticky-col {
+            z-index: 3;
+            background-color: #f8f9fa; /* 헤더 배경색 유지 */
+        }
+        
+        /* 중분류 들여쓰기 스타일 */
+        .finance-row-sub {
+            display: inline-block;
+            padding-left: 15px;
+            position: relative;
+        }
+        
+        .finance-row-sub::before {
+            content: "-";
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        /* 수직 경계선 강조 */
+        .finance-statement-table th.finance-first-col,
+        .finance-statement-table td.finance-first-col {
+            border-right: 2px solid #dee2e6;
+        }
+        
+        .finance-statement-table th.finance-second-col,
+        .finance-statement-table td.finance-second-col {
+            border-right: 2px solid #dee2e6;
+        }
+        
+        /* 음수/양수 금액 색상 */
+        .finance-positive {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+        
+        .finance-negative {
+            color: #e57373;
+            font-weight: 600;
+        }
+        
+        /* 테마 선택 버튼 스타일 */
+        .theme-btn {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .theme-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .theme-btn.active {
+            transform: scale(1.1);
+            border: 2px solid #000 !important;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        .theme-btn::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0;
+            height: 0;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transition: width 0.3s, height 0.3s;
+        }
+        
+        .theme-btn:active::after {
+            width: 50px;
+            height: 50px;
+            opacity: 0;
+        }
+        
+        .current-theme {
+            font-weight: 500;
         }
     </style>
 </head>
@@ -532,18 +946,18 @@
             <h1><i class="bi bi-calendar-check"></i> 연간 지출 관리 앱</h1>
             <div class="summary-pills">
                 <div class="summary-pill">
-                    <i class="bi bi-cash-stack text-danger"></i>
-                    <span>연간 총 지출: <span id="total-expense" class="text-danger">0</span>원</span>
+                    <i class="bi bi-cash-stack" style="color: #c06c6c;"></i>
+                    <span>연간 총 지출: <span id="total-expense" style="color: #c06c6c;">0</span>원</span>
                 </div>
                 <div class="summary-pill">
-                    <i class="bi bi-cash-coin text-primary"></i>
-                    <span>연간 총 수입: <span id="total-income" class="text-primary">0</span>원</span>
+                    <i class="bi bi-cash-coin" style="color: #9a7592;"></i>
+                    <span>연간 총 수입: <span id="total-income" style="color: #9a7592;">0</span>원</span>
                 </div>
                 <div class="summary-pill">
-                    <i class="bi bi-wallet2"></i>
+                    <i class="bi bi-wallet2" style="color: var(--primary-dark);"></i>
                     <span>연간 순수입: <span id="net-income">0</span>원</span>
                 </div>
-                <select id="year-selector" class="form-select form-select-sm" style="width: 120px;">
+                <select id="year-selector" class="form-select form-select-sm" style="width: 120px; border-color: var(--border-color);">
                     <!-- 년도 옵션은 자바스크립트로 생성 -->
                 </select>
             </div>
@@ -556,6 +970,11 @@
                 <div class="modern-tabs-item" role="presentation">
                     <button class="modern-tabs-link active" id="calendar-tab-btn" data-bs-toggle="tab" data-bs-target="#calendar-tab" type="button" role="tab" aria-controls="calendar-tab" aria-selected="true">
                         <i class="bi bi-calendar-check"></i> 지출 달력
+                    </button>
+                </div>
+                <div class="modern-tabs-item" role="presentation">
+                    <button class="modern-tabs-link" id="finance-statement-tab-btn" data-bs-toggle="tab" data-bs-target="#finance-statement-tab" type="button" role="tab" aria-controls="finance-statement-tab" aria-selected="false">
+                        <i class="bi bi-cash-coin"></i> 자금수지
                     </button>
                 </div>
                 <div class="modern-tabs-item" role="presentation">
@@ -597,6 +1016,53 @@
                             <button id="next-year-btn" class="btn btn-outline-primary">다음 년도</button>
                         </div>
                         <div id="expense-calendar" class="calendar-grid"></div>
+                    </div>
+                </div>
+                
+                <!-- 자금수지 탭 -->
+                <div class="tab-pane fade" id="finance-statement-tab" role="tabpanel" aria-labelledby="finance-statement-tab-btn">
+                    <div class="finance-container">
+                        <div class="card">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h3 class="mb-0 fs-4">연간 자금수지 현황</h3>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary" id="export-finance-btn">
+                                        <i class="bi bi-download"></i> 엑셀 다운로드
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="finance-table-wrapper">
+                                    <table class="table table-bordered table-hover finance-statement-table" id="finance-statement-table">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="finance-sticky-col finance-first-col text-center align-middle">구분</th>
+                                                <th class="finance-sticky-col finance-second-col text-center align-middle">＜합 계＞</th>
+                                                <th class="text-center align-middle">1월</th>
+                                                <th class="text-center align-middle">2월</th>
+                                                <th class="text-center align-middle">3월</th>
+                                                <th class="text-center align-middle">4월</th>
+                                                <th class="text-center align-middle">5월</th>
+                                                <th class="text-center align-middle">6월</th>
+                                                <th class="text-center align-middle">7월</th>
+                                                <th class="text-center align-middle">8월</th>
+                                                <th class="text-center align-middle">9월</th>
+                                                <th class="text-center align-middle">10월</th>
+                                                <th class="text-center align-middle">11월</th>
+                                                <th class="text-center align-middle">12월</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="finance-statement-body">
+                                            <!-- 자금수지 데이터가 여기에 동적으로 채워집니다 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 text-muted small">
+                            <p class="mb-1"><i class="bi bi-info-circle"></i> 월별 수입/지출에 따른 자금 흐름을 확인할 수 있습니다.</p>
+                            <p class="mb-0"><i class="bi bi-info-circle"></i> 연간 합계는 매월 누적된 금액이며, 기말잔액은 전월 이월금을 포함합니다.</p>
+                        </div>
                     </div>
                 </div>
                 
@@ -803,7 +1269,31 @@
                                     <button id="restore-data-btn" class="btn btn-warning mb-2">데이터 복원</button>
                                     <hr>
                                     <p class="text-danger">데이터 초기화</p>
+                                    <div class="mb-3">
+                                        <label for="reset-password" class="form-label">비밀번호:</label>
+                                        <input type="password" id="reset-password" class="form-control" placeholder="비밀번호를 입력하세요">
+                                        <small class="text-muted">데이터 초기화를 위해서는 비밀번호가 필요합니다.</small>
+                                    </div>
                                     <button id="reset-data-btn" class="btn btn-danger">모든 데이터 초기화</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">테마 설정</div>
+                                <div class="card-body">
+                                    <p>테마 색상 선택</p>
+                                    <div class="theme-options mb-3">
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <button class="theme-btn" data-theme="default" style="background-color: #e3b9d6; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #e3b9d6;"></button>
+                                            <button class="theme-btn" data-theme="blue" style="background-color: #90caf9; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #90caf9;"></button>
+                                            <button class="theme-btn" data-theme="green" style="background-color: #a5d6a7; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #a5d6a7;"></button>
+                                            <button class="theme-btn" data-theme="orange" style="background-color: #ffcc80; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #ffcc80;"></button>
+                                            <button class="theme-btn" data-theme="purple" style="background-color: #b39ddb; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #b39ddb;"></button>
+                                        </div>
+                                    </div>
+                                    <p class="mb-1 current-theme">현재 테마: <span id="current-theme-name">기본 테마</span></p>
+                                    <p class="small text-muted">테마 변경시 새로고침 후 모든 색상이 적용됩니다.</p>
                                 </div>
                             </div>
                         </div>
