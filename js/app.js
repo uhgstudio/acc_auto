@@ -653,45 +653,75 @@ const App = {
             // 현재 년도
             const year = DataManager.data.year;
             
-            // CSV 데이터 생성
-            let csvContent = '자금수지표 - ' + year + '년\n\n';
+            // CSV 데이터 생성 - BOM 추가하여 한글 깨짐 방지
+            let csvContent = '\ufeff'; // BOM (Byte Order Mark)
+            csvContent += '자금수지표 - ' + year + '년\r\n\r\n';
             
             // 헤더 추가
             const headers = [];
             table.querySelectorAll('thead th').forEach(th => {
-                headers.push(th.textContent.trim());
+                // CSV 형식에 맞게 텍스트 처리 (콤마, 쌍따옴표 처리)
+                const cellText = th.textContent.trim();
+                headers.push(this.escapeCSVCell(cellText));
             });
-            csvContent += headers.join(',') + '\n';
+            csvContent += headers.join(',') + '\r\n';
             
             // 데이터 행 추가
             table.querySelectorAll('tbody tr').forEach(row => {
                 const rowData = [];
                 row.querySelectorAll('td').forEach(cell => {
-                    // 콤마와 따옴표 처리 (CSV 형식)
-                    let cellText = cell.textContent.trim().replace(/,/g, '');
-                    rowData.push(cellText);
+                    // 셀 텍스트 가져오기 (숫자 포맷팅 제거)
+                    let cellText = cell.textContent.trim();
+                    
+                    // 통화 기호 및 콤마 제거 (숫자 데이터의 경우)
+                    if (/^[+-]?[\d,]+원?$/.test(cellText)) {
+                        // 모든 콤마 제거 및 '원' 문자 제거
+                        cellText = cellText.replace(/,/g, '').replace(/원$/, '');
+                        
+                        // 순수 숫자값만 남김 (CSV에서 숫자로 인식되도록)
+                        if (!isNaN(parseFloat(cellText))) {
+                            cellText = parseFloat(cellText);
+                        }
+                    }
+                    
+                    // CSV 형식에 맞게 처리
+                    rowData.push(this.escapeCSVCell(cellText));
                 });
-                csvContent += rowData.join(',') + '\n';
+                csvContent += rowData.join(',') + '\r\n';
             });
             
-            // CSV 파일 다운로드
+            // 엑셀에서 UTF-8로 열리도록 설정
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
             
             link.setAttribute('href', url);
-            link.setAttribute('download', `자금수지표_${year}년.csv`);
+            link.setAttribute('download', `자금수지표_${year}년_${new Date().toISOString().slice(0,10)}.csv`);
             link.style.visibility = 'hidden';
             
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             
-            alert('자금수지 데이터가 CSV 파일로 저장되었습니다.');
+            alert('자금수지 데이터가 CSV 파일로 저장되었습니다.\n파일을 열 때 Excel에서 UTF-8 인코딩으로 열어주세요.');
         } catch (error) {
             console.error('엑셀 다운로드 중 오류 발생:', error);
             alert('파일 다운로드 중 오류가 발생했습니다.');
         }
+    },
+    
+    // CSV 셀 값 이스케이프 처리
+    escapeCSVCell(cellText) {
+        // 숫자인 경우 그대로 반환 (따옴표로 감싸지 않음)
+        if (typeof cellText === 'number') {
+            return cellText;
+        }
+        
+        // 쌍따옴표, 콤마, 개행문자가 포함된 경우 쌍따옴표로 감싸고 내부 쌍따옴표는 두 번 사용
+        if (cellText.includes('"') || cellText.includes(',') || cellText.includes('\n') || cellText.includes('\r')) {
+            return '"' + cellText.replace(/"/g, '""') + '"';
+        }
+        return cellText;
     },
     
     // 테마 설정 기능 초기화
