@@ -113,6 +113,55 @@
             color: var(--primary-color);
         }
         
+        /* 페이징 버튼 스타일 */
+        .pagination-button {
+            padding: 5px 15px;
+            margin: 0 5px;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            color: var(--accent-color);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .pagination-button:hover:not(:disabled) {
+            background-color: var(--primary-light);
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .pagination-button:active:not(:disabled) {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(1px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .pagination-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #f5f5f5;
+        }
+        
+        .page-info {
+            display: inline-flex;
+            align-items: center;
+            padding: 0 10px;
+            height: 30px;
+            background-color: var(--light-color);
+            border-radius: 15px;
+            margin: 0 5px;
+            font-weight: 500;
+            color: var(--text-color);
+            font-size: 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
         /* 새로운 탭 스타일 */
         .modern-tabs {
             background-color: white;

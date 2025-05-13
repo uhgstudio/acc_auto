@@ -430,12 +430,12 @@ const ExpenseCalendar = {
                                         <span class="badge bg-danger">지출: ${Utils.number.formatCurrency(totalExpense)}</span>
                                         <span class="badge ${netAmountClass}">순액: ${netAmountPrefix}${Utils.number.formatCurrency(absNetAmount)}</span>
                                     </div>
-                                    <button id="prevPage" class="pagination-button"><i class="bi bi-chevron-left"></i> 이전</button>
+                                    <button id="prevPage" class="pagination-button"><i class="bi bi-arrow-left"></i></button>
                                     <div class="page-info">
                                         <span id="currentPageDisplay">1</span> / <span id="totalPagesDisplay">1</span>
                                         <span class="small text-muted ms-2">(${Math.min(1, expenses.length)}-${Math.min(itemsPerPage, expenses.length)}/${expenses.length}개)</span>
                                     </div>
-                                    <button id="nextPage" class="pagination-button">다음 <i class="bi bi-chevron-right"></i></button>
+                                    <button id="nextPage" class="pagination-button"><i class="bi bi-arrow-right"></i></button>
                                 </div>
                                 <div>
                                     <button id="add-expense-in-detail" class="btn btn-sm btn-success">
@@ -763,6 +763,15 @@ const ExpenseCalendar = {
                 
                 prevBtn.disabled = currentPage === 1;
                 nextBtn.disabled = currentPage === totalPages || filteredExpenses.length === 0;
+                
+                // 페이지 버튼에 아이콘 업데이트
+                prevBtn.innerHTML = prevBtn.disabled ? 
+                    '<i class="bi bi-arrow-left"></i>' : 
+                    '<i class="bi bi-arrow-left"></i>';
+                    
+                nextBtn.innerHTML = nextBtn.disabled ? 
+                    '<i class="bi bi-arrow-right"></i>' : 
+                    '<i class="bi bi-arrow-right"></i>';
                 
                 // 수정 및 삭제 버튼 클릭 이벤트 추가
                 setupItemActionButtons(popup);
