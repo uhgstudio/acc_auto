@@ -447,13 +447,13 @@ const ExpenseCalendar = {
                                 <table class="table table-hover" id="expense-detail-list" style="width: 100%; table-layout: fixed;">
                                     <thead>
                                         <tr>
-                                            <th style="width: 8%; font-size: 15px; background-color: #f0f0f0;">날짜</th>
-                                            <th style="width: 30%; font-size: 15px; background-color: #f0f0f0;">내용</th>
-                                            <th style="width: 22%; font-size: 15px; background-color: #f0f0f0;">분류</th>
-                                            <th style="width: 15%; font-size: 15px; background-color: #f0f0f0;">금액</th>
-                                            <th style="width: 7%; font-size: 15px; background-color: #f0f0f0;">실입금</th>
-                                            <th style="width: 15%; font-size: 15px; background-color: #f0f0f0;">잔액</th>
-                                            <th style="width: 10%; font-size: 15px; background-color: #f0f0f0;">관리</th>
+                                            <th style="width: 15%; font-size: 15px; background-color: #f0f0f0;">날짜</th>
+                                            <th style="width: 25%; font-size: 15px; background-color: #f0f0f0;">내용</th>
+                                            <th style="width: 20%; font-size: 15px; background-color: #f0f0f0;">분류</th>
+                                            <th style="width: 15%; font-size: 15px; background-color: #f0f0f0; text-align: right;">금액</th>
+                                            <th style="width: 7%; font-size: 15px; background-color: #f0f0f0; text-align: center;">실입금</th>
+                                            <th style="width: 12%; font-size: 15px; background-color: #f0f0f0; text-align: right;">잔액</th>
+                                            <th style="width: 10%; font-size: 15px; background-color: #f0f0f0; text-align: center;">관리</th>
                                         </tr>
                                     </thead>
                                     <tbody>

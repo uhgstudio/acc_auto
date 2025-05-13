@@ -199,11 +199,11 @@ const ExpenseManager = {
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>날짜</th>
-                            <th>금액</th>
-                            <th>내용</th>
-                            <th>분류</th>
-                            <th>관리</th>
+                            <th style="width: 15%;">날짜</th>
+                            <th style="width: 15%; text-align: right;">금액</th>
+                            <th style="width: 30%;">내용</th>
+                            <th style="width: 30%;">분류</th>
+                            <th style="width: 10%; text-align: center;">관리</th>
                         </tr>
                     </thead>
                     <tbody id="one-time-expense-body">
@@ -281,10 +281,10 @@ const ExpenseManager = {
             rowsHtml += `
                 <tr>
                     <td>${expense.date}</td>
-                    <td class="${amountClass}">${amountPrefix}${Utils.number.formatCurrency(expense.amount)}</td>
+                    <td class="${amountClass}" style="text-align: right;">${amountPrefix}${Utils.number.formatCurrency(expense.amount)}</td>
                     <td>${expense.description}</td>
                     <td>${mainCategoryName}${subCategoryName ? ` > ${subCategoryName}` : ''} ${actualPaymentBadge}</td>
-                    <td>
+                    <td style="text-align: center;">
                         <button class="btn btn-sm btn-outline-primary edit-one-time-expense me-1" data-index="${originalIndex}">
                             <i class="bi bi-pencil-square"></i>
                         </button>
