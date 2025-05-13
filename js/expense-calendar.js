@@ -594,12 +594,10 @@ const ExpenseCalendar = {
                     const subCategory = DataManager.data.categories.sub.find(c => c.code === expense.subCategory) || { name: '' };
                     
                     // 잔액 계산
-                    if (expense.isActualPayment) {
-                        if (mainCategory.type === 'income') {
-                            runningBalance += expense.amount;
-                        } else {
-                            runningBalance -= expense.amount;
-                        }
+                    if (mainCategory.type === 'income') {
+                        runningBalance += expense.amount;
+                    } else {
+                        runningBalance -= expense.amount;
                     }
                     
                     // 현재 페이지 범위에 있는 항목만 테이블에 추가
@@ -618,8 +616,8 @@ const ExpenseCalendar = {
                         
                         // 실제 입금 여부 배지
                         const actualPaymentBadge = expense.isActualPayment ? 
-                            '<span class="badge bg-success">✓</span>' : 
-                            '<span class="badge bg-secondary">✗</span>';
+                            '<span class="badge bg-success actual-payment-badge" data-id="' + expense.id + '">✓</span>' : 
+                            '<span class="badge bg-secondary actual-payment-badge" data-id="' + expense.id + '">✗</span>';
                         
                         tr.innerHTML = `
                             <td style="font-size: 14px;">${expense.date}</td>
@@ -682,6 +680,41 @@ const ExpenseCalendar = {
                 
                 // 수정 및 삭제 버튼 클릭 이벤트 추가
                 setupItemActionButtons(popup);
+                
+                // 실입금 배지 클릭 이벤트 추가
+                const actualPaymentBadges = popup.querySelectorAll('.actual-payment-badge');
+                actualPaymentBadges.forEach(badge => {
+                    badge.style.cursor = 'pointer';
+                    badge.title = '클릭하여 실입금 상태 변경';
+                    
+                    badge.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const expenseId = parseInt(badge.dataset.id);
+                        
+                        try {
+                            // 데이터 매니저에서 실입금 상태 토글
+                            const updatedExpense = DataManager.toggleActualPayment(expenseId);
+                            
+                            // UI 업데이트
+                            if (updatedExpense.isActualPayment) {
+                                badge.className = 'badge bg-success actual-payment-badge';
+                                badge.textContent = '✓';
+                            } else {
+                                badge.className = 'badge bg-secondary actual-payment-badge';
+                                badge.textContent = '✗';
+                            }
+                            
+                            // 전체 테이블 다시 렌더링 (잔액 갱신을 위해)
+                            popup.remove();
+                            const updatedExpenses = this.getMonthlyExpenses(DataManager.data.year, month);
+                            this.showExpenseDetail(month, updatedExpenses);
+                            
+                        } catch (error) {
+                            console.error('실입금 상태 변경 중 오류 발생:', error);
+                            alert('실입금 상태 변경 중 오류가 발생했습니다.');
+                        }
+                    });
+                });
                 
                 // 페이지 로딩 완료 효과
                 tbody.classList.remove('loading-page');

@@ -273,7 +273,7 @@ const App = {
         
         // 기초잔액 행 HTML 생성
         initialBalanceRow.innerHTML = `
-            <td class="finance-sticky-col finance-first-col"><기초잔액></td>
+            <td class="finance-sticky-col finance-first-col"><기초시재></td>
             <td class="finance-sticky-col finance-second-col text-end">${Utils.number.formatCurrency(totalInitialBalance)}</td>
             ${monthlyInitialBalance.map((balance, idx) => `
                 <td class="text-end" data-month="${idx+1}" data-type="initial-balance">${Utils.number.formatCurrency(balance)}</td>
@@ -383,7 +383,7 @@ const App = {
         const totalIncomeRow = document.createElement('tr');
         totalIncomeRow.className = 'finance-row-main';
         totalIncomeRow.innerHTML = `
-            <td class="finance-sticky-col finance-first-col">총수입</td>
+            <td class="finance-sticky-col finance-first-col">수입</td>
             <td class="finance-sticky-col finance-second-col text-end finance-positive">${Utils.number.formatCurrency(totalIncomeAmount)}</td>
             ${monthlyIncomeAmount.map((amount, idx) => `
                 <td class="text-end finance-positive clickable-amount" data-month="${idx+1}" data-type="income" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
@@ -419,16 +419,7 @@ const App = {
             });
         });
         
-        // 3. 지출 섹션 헤더
-        const expenseHeaderRow = document.createElement('tr');
-        expenseHeaderRow.className = 'finance-row-total';
-        expenseHeaderRow.innerHTML = `
-            <td class="finance-sticky-col finance-first-col">지출</td>
-            <td class="finance-sticky-col finance-second-col text-end"></td>
-            ${Array(12).fill('<td class="text-end"></td>').join('')}
-        `;
-        financeBody.appendChild(expenseHeaderRow);
-        
+        // 3. 지출 섹션 헤더 - 삭제
         // 지출 카테고리 데이터 처리
         const expenseCategories = {};
         let totalExpenseAmount = 0;
@@ -530,7 +521,7 @@ const App = {
         const totalExpenseRow = document.createElement('tr');
         totalExpenseRow.className = 'finance-row-main';
         totalExpenseRow.innerHTML = `
-            <td class="finance-sticky-col finance-first-col">총지출</td>
+            <td class="finance-sticky-col finance-first-col">지출</td>
             <td class="finance-sticky-col finance-second-col text-end finance-negative">${Utils.number.formatCurrency(totalExpenseAmount)}</td>
             ${monthlyExpenseAmount.map((amount, idx) => `
                 <td class="text-end finance-negative clickable-amount" data-month="${idx+1}" data-type="expense" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
@@ -566,26 +557,7 @@ const App = {
             });
         });
         
-        // 5. 최종 순수입 행 추가 (수입 - 지출)
-        const netIncomeRow = document.createElement('tr');
-        netIncomeRow.className = 'finance-row-total';
-        
-        const monthlyNetIncome = Array(12).fill(0);
-        for (let i = 0; i < 12; i++) {
-            monthlyNetIncome[i] = monthlyIncomeAmount[i] - monthlyExpenseAmount[i];
-        }
-        const totalNetIncome = totalIncomeAmount - totalExpenseAmount;
-        
-        netIncomeRow.innerHTML = `
-            <td class="finance-sticky-col finance-first-col"><순수입></td>
-            <td class="finance-sticky-col finance-second-col text-end ${totalNetIncome >= 0 ? 'finance-positive' : 'finance-negative'}">${Utils.number.formatCurrency(totalNetIncome)}</td>
-            ${monthlyNetIncome.map((amount, idx) => `
-                <td class="text-end ${amount >= 0 ? 'finance-positive' : 'finance-negative'}">${Utils.number.formatCurrency(amount)}</td>
-            `).join('')}
-        `;
-        financeBody.appendChild(netIncomeRow);
-        
-        // 6. 기말잔액 행 추가 (기초잔액 + 순수입)
+        // 기말잔액 행 추가 (기초잔액 + 순수입)
         const finalBalanceRow = document.createElement('tr');
         finalBalanceRow.className = 'finance-row-total';
         
@@ -593,10 +565,10 @@ const App = {
         const totalFinalBalance = monthlyFinalBalance[11] || 0; // 12월의 최종 잔액이 연간 총 잔액
         
         finalBalanceRow.innerHTML = `
-            <td class="finance-sticky-col finance-first-col"><기말잔액></td>
-            <td class="finance-sticky-col finance-second-col text-end ${totalFinalBalance >= 0 ? 'finance-positive' : 'finance-negative'}">${Utils.number.formatCurrency(totalFinalBalance)}</td>
+            <td class="finance-sticky-col finance-first-col"><기말시재></td>
+            <td class="finance-sticky-col finance-second-col text-end">${Utils.number.formatCurrency(totalFinalBalance)}</td>
             ${monthlyFinalBalance.map((balance, idx) => `
-                <td class="text-end ${balance >= 0 ? 'finance-positive' : 'finance-negative'}" data-month="${idx+1}" data-type="final-balance">${Utils.number.formatCurrency(balance)}</td>
+                <td class="text-end" data-month="${idx+1}" data-type="final-balance">${Utils.number.formatCurrency(balance)}</td>
             `).join('')}
         `;
         financeBody.appendChild(finalBalanceRow);
