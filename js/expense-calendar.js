@@ -408,6 +408,20 @@ const ExpenseCalendar = {
                     </ul>
                     <div class="tab-content" id="expenseDetailTabContent">
                         <div class="tab-pane fade show active" id="detail-content" role="tabpanel" aria-labelledby="detail-tab">
+                            <!-- 날짜 검색 필터 추가 -->
+                            <div class="row mb-3 mt-2">
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <span class="input-group-text">날짜 범위</span>
+                                        <input type="date" id="date-filter-start" class="form-control" value="${DataManager.data.year}-${month.toString().padStart(2, '0')}-01">
+                                        <span class="input-group-text">~</span>
+                                        <input type="date" id="date-filter-end" class="form-control" value="${DataManager.data.year}-${month.toString().padStart(2, '0')}-${new Date(DataManager.data.year, month, 0).getDate().toString().padStart(2, '0')}">
+                                        <button id="apply-date-filter" class="btn btn-primary">적용</button>
+                                        <button id="reset-date-filter" class="btn btn-outline-secondary">초기화</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div class="d-flex justify-content-between align-items-center my-2">
                                 <div class="d-flex align-items-center">
                                     <div class="me-3">
@@ -530,6 +544,84 @@ const ExpenseCalendar = {
         };
         document.addEventListener('keydown', escHandler);
         
+        // 팝업 외부 클릭시 닫기 기능 제거
+        
+        // 날짜 필터 변수 초기화
+        let filteredExpenses = [...expenses]; // 원본 데이터의 복사본으로 시작
+        
+        // 날짜 필터 적용 함수
+        const applyDateFilter = () => {
+            const startDate = document.getElementById('date-filter-start').value;
+            const endDate = document.getElementById('date-filter-end').value;
+            
+            if (!startDate || !endDate) {
+                alert('시작 날짜와 종료 날짜를 모두 입력해주세요.');
+                return;
+            }
+            
+            // 필터링된 지출 항목 업데이트
+            filteredExpenses = expenses.filter(expense => {
+                return expense.date >= startDate && expense.date <= endDate;
+            });
+            
+            // 페이지 리셋 후 테이블 다시 렌더링
+            currentPage = 1;
+            renderExpenseTable();
+            
+            // 필터링 결과 요약 업데이트
+            updateFilteredSummary();
+        };
+        
+        // 필터링된 요약 정보 업데이트
+        const updateFilteredSummary = () => {
+            let totalFilteredIncome = 0;
+            let totalFilteredExpense = 0;
+            
+            filteredExpenses.forEach(expense => {
+                if (expense.isIncome) {
+                    totalFilteredIncome += expense.amount;
+                } else {
+                    totalFilteredExpense += expense.amount;
+                }
+            });
+            
+            const netFilteredAmount = totalFilteredIncome - totalFilteredExpense;
+            const netFilteredPrefix = netFilteredAmount >= 0 ? '+' : '-';
+            const netFilteredClass = netFilteredAmount >= 0 ? 'text-primary' : 'text-danger';
+            const absNetFilteredAmount = Math.abs(netFilteredAmount);
+            
+            // 배지 업데이트
+            const badgeContainer = popup.querySelector('.me-3');
+            badgeContainer.innerHTML = `
+                <span class="badge bg-primary">총 ${filteredExpenses.length}개 항목</span>
+                <span class="badge bg-primary">수입: ${Utils.number.formatCurrency(totalFilteredIncome)}</span>
+                <span class="badge bg-danger">지출: ${Utils.number.formatCurrency(totalFilteredExpense)}</span>
+                <span class="badge ${netFilteredClass}">순액: ${netFilteredPrefix}${Utils.number.formatCurrency(absNetFilteredAmount)}</span>
+            `;
+        };
+        
+        // 날짜 필터 이벤트 리스너 설정
+        const applyFilterBtn = popup.querySelector('#apply-date-filter');
+        const resetFilterBtn = popup.querySelector('#reset-date-filter');
+        
+        if (applyFilterBtn && resetFilterBtn) {
+            // 필터 적용 버튼
+            applyFilterBtn.addEventListener('click', applyDateFilter);
+            
+            // 필터 초기화 버튼
+            resetFilterBtn.addEventListener('click', () => {
+                // 날짜 필드 초기화
+                document.getElementById('date-filter-start').value = `${DataManager.data.year}-${month.toString().padStart(2, '0')}-01`;
+                document.getElementById('date-filter-end').value = `${DataManager.data.year}-${month.toString().padStart(2, '0')}-${new Date(DataManager.data.year, month, 0).getDate().toString().padStart(2, '0')}`;
+                
+                // 필터링된 데이터 초기화
+                filteredExpenses = [...expenses];
+                currentPage = 1;
+                renderExpenseTable();
+                updateFilteredSummary();
+            });
+        }
+        
         // 상세 내역 테이블 채우기
         const tbody = popup.querySelector('#expense-detail-list tbody');
         
@@ -541,13 +633,6 @@ const ExpenseCalendar = {
         if (month > 1 && monthlyBalanceData[month-2]) {
             initialBalance = monthlyBalanceData[month-2].finalBalance;
         }
-        
-        // 날짜순으로 정렬
-        expenses.sort((a, b) => {
-            const dateA = new Date(a.date);
-            const dateB = new Date(b.date);
-            return dateA - dateB;
-        });
         
         // 페이징 처리 함수
         const renderExpenseTable = () => {
@@ -578,59 +663,68 @@ const ExpenseCalendar = {
                 
                 // 현재 페이지에 표시할 항목 범위 계산
                 const startIndex = (currentPage - 1) * itemsPerPage;
-                const endIndex = Math.min(startIndex + itemsPerPage, expenses.length);
+                const endIndex = Math.min(startIndex + itemsPerPage, filteredExpenses.length);
                 
-                // 해당 페이지 범위의 항목만 표시
-                for (let i = 0; i < expenses.length; i++) {
-                    // 모든 항목에 대해 잔액을 계산하지만, 현재 페이지 항목만 표시
-                    const expense = expenses[i];
-                    
-                    // 대분류 정보 찾기
-                    const mainCategory = DataManager.data.categories.main.find(c => c.code === expense.mainCategory) || { name: '미분류' };
-                    
-                    // 중분류 정보 찾기
-                    const subCategory = DataManager.data.categories.sub.find(c => c.code === expense.subCategory) || { name: '' };
-                    
-                    // 잔액 계산
-                    if (mainCategory.type === 'income') {
-                        runningBalance += expense.amount;
-                    } else {
-                        runningBalance -= expense.amount;
-                    }
-                    
-                    // 현재 페이지 범위에 있는 항목만 테이블에 추가
-                    if (i >= startIndex && i < endIndex) {
-                        const tr = document.createElement('tr');
+                // 필터링된 항목이 없는 경우
+                if (filteredExpenses.length === 0) {
+                    const noDataRow = document.createElement('tr');
+                    noDataRow.innerHTML = `
+                        <td colspan="7" class="text-center">해당 날짜 범위에 데이터가 없습니다.</td>
+                    `;
+                    tbody.appendChild(noDataRow);
+                } else {
+                    // 해당 페이지 범위의 항목만 표시
+                    for (let i = 0; i < filteredExpenses.length; i++) {
+                        // 모든 항목에 대해 잔액을 계산하지만, 현재 페이지 항목만 표시
+                        const expense = filteredExpenses[i];
                         
-                        // 수입/지출에 따라 스타일 적용
-                        const amountClass = mainCategory.type === 'income' ? 'text-primary' : 'text-danger';
-                        const amountPrefix = mainCategory.type === 'income' ? '+' : '-';
+                        // 대분류 정보 찾기
+                        const mainCategory = DataManager.data.categories.main.find(c => c.code === expense.mainCategory) || { name: '미분류' };
                         
-                        // 실제 입금 여부 배지
-                        const actualPaymentBadge = expense.isActualPayment ? 
-                            '<span class="badge bg-success actual-payment-badge" data-id="' + expense.id + '">✓</span>' : 
-                            '<span class="badge bg-secondary actual-payment-badge" data-id="' + expense.id + '">✗</span>';
+                        // 중분류 정보 찾기
+                        const subCategory = DataManager.data.categories.sub.find(c => c.code === expense.subCategory) || { name: '' };
                         
-                        tr.innerHTML = `
-                            <td style="font-size: 14px;">${expense.date}</td>
-                            <td style="font-size: 14px; word-break: break-all; overflow-wrap: break-word;">${expense.description}</td>
-                            <td style="font-size: 14px;">${mainCategory.name} > ${subCategory.name}</td>
-                            <td class="text-end ${amountClass}" style="font-size: 14px;">${amountPrefix}${Utils.number.formatCurrency(expense.amount)}</td>
-                            <td class="text-center">${actualPaymentBadge}</td>
-                            <td class="text-end" style="font-size: 14px;">${Utils.number.formatCurrency(runningBalance)}</td>
-                            <td class="text-center">
-                                <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-primary btn-sm edit-expense-btn" data-id="${expense.id}">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </button>
-                                    <button class="btn btn-outline-danger btn-sm delete-expense-btn" data-id="${expense.id}">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        `;
+                        // 잔액 계산
+                        if (mainCategory.type === 'income') {
+                            runningBalance += expense.amount;
+                        } else {
+                            runningBalance -= expense.amount;
+                        }
                         
-                        tbody.appendChild(tr);
+                        // 현재 페이지 범위에 있는 항목만 테이블에 추가
+                        if (i >= startIndex && i < endIndex) {
+                            const tr = document.createElement('tr');
+                            
+                            // 수입/지출에 따라 스타일 적용
+                            const amountClass = mainCategory.type === 'income' ? 'text-primary' : 'text-danger';
+                            const amountPrefix = mainCategory.type === 'income' ? '+' : '-';
+                            
+                            // 실제 입금 여부 배지
+                            const actualPaymentBadge = expense.isActualPayment ? 
+                                '<span class="badge bg-success actual-payment-badge" data-id="' + expense.id + '">✓</span>' : 
+                                '<span class="badge bg-secondary actual-payment-badge" data-id="' + expense.id + '">✗</span>';
+                            
+                            tr.innerHTML = `
+                                <td style="font-size: 14px;">${expense.date}</td>
+                                <td style="font-size: 14px; word-break: break-all; overflow-wrap: break-word;">${expense.description}</td>
+                                <td style="font-size: 14px;">${mainCategory.name} > ${subCategory.name}</td>
+                                <td class="text-end ${amountClass}" style="font-size: 14px;">${amountPrefix}${Utils.number.formatCurrency(expense.amount)}</td>
+                                <td class="text-center">${actualPaymentBadge}</td>
+                                <td class="text-end" style="font-size: 14px;">${Utils.number.formatCurrency(runningBalance)}</td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary btn-sm edit-expense-btn" data-id="${expense.id}">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm delete-expense-btn" data-id="${expense.id}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            `;
+                            
+                            tbody.appendChild(tr);
+                        }
                     }
                 }
                 
@@ -645,7 +739,7 @@ const ExpenseCalendar = {
                 tbody.appendChild(finalBalanceRow);
                 
                 // 페이징 표시 업데이트
-                const totalPages = Math.ceil(expenses.length / itemsPerPage);
+                const totalPages = Math.max(1, Math.ceil(filteredExpenses.length / itemsPerPage));
                 const currentPageDisplay = popup.querySelector('#currentPageDisplay');
                 const totalPagesDisplay = popup.querySelector('#totalPagesDisplay');
                 const prevBtn = popup.querySelector('#prevPage');
@@ -655,8 +749,8 @@ const ExpenseCalendar = {
                 totalPagesDisplay.textContent = totalPages;
                 
                 // 현재 표시 중인 아이템 범위 계산
-                const startItem = expenses.length > 0 ? startIndex + 1 : 0;
-                const endItem = Math.min(endIndex, expenses.length);
+                const startItem = filteredExpenses.length > 0 ? startIndex + 1 : 0;
+                const endItem = Math.min(endIndex, filteredExpenses.length);
                 
                 // 페이지 상태 업데이트
                 const pageInfoContainer = popup.querySelector('.page-info');
@@ -664,11 +758,11 @@ const ExpenseCalendar = {
                     <span id="currentPageDisplay">${currentPage}</span>
                     <span>/</span>
                     <span id="totalPagesDisplay">${totalPages}</span>
-                    <span class="small text-muted ms-2">(${startItem}-${endItem}/${expenses.length}개)</span>
+                    <span class="small text-muted ms-2">(${startItem}-${endItem}/${filteredExpenses.length}개)</span>
                 `;
                 
                 prevBtn.disabled = currentPage === 1;
-                nextBtn.disabled = currentPage === totalPages || expenses.length === 0;
+                nextBtn.disabled = currentPage === totalPages || filteredExpenses.length === 0;
                 
                 // 수정 및 삭제 버튼 클릭 이벤트 추가
                 setupItemActionButtons(popup);
@@ -758,7 +852,7 @@ const ExpenseCalendar = {
         });
         
         nextPageBtn.addEventListener('click', () => {
-            const totalPages = Math.ceil(expenses.length / itemsPerPage);
+            const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage);
             if (currentPage < totalPages) {
                 currentPage++;
                 renderExpenseTable();

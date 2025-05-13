@@ -163,29 +163,96 @@ const ExpenseManager = {
         const oneTimeExpenseList = document.getElementById('one-time-expense-list');
         if (!oneTimeExpenseList) return;
         
+        // 오늘 날짜를 기본 필터로 설정
+        const today = new Date();
+        const defaultDate = today.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+        
+        // 검색 필터 UI 생성
+        let filterHtml = `
+            <div class="filter-container mb-3">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text">날짜 범위</span>
+                            <input type="date" id="one-time-date-filter-start" class="form-control" value="${defaultDate}">
+                            <span class="input-group-text">~</span>
+                            <input type="date" id="one-time-date-filter-end" class="form-control" value="${defaultDate}">
+                            <button id="apply-one-time-filter" class="btn btn-primary">적용</button>
+                            <button id="reset-one-time-filter" class="btn btn-outline-secondary">전체 보기</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 일회성 지출이 없는 경우
         if (DataManager.data.oneTimeExpenses.length === 0) {
-            oneTimeExpenseList.innerHTML = '<p>등록된 일회성 지출이 없습니다.</p>';
+            oneTimeExpenseList.innerHTML = filterHtml + '<p>등록된 일회성 지출이 없습니다.</p>';
+            this.setupFilterEventListeners(); // 필터 이벤트 리스너 설정
             return;
         }
         
-        let html = `
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>날짜</th>
-                        <th>금액</th>
-                        <th>내용</th>
-                        <th>분류</th>
-                        <th>관리</th>
-                    </tr>
-                </thead>
-                <tbody>
+        // 필터 적용된 테이블 생성
+        let html = filterHtml;
+        html += `
+            <div id="filtered-expenses-container">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>날짜</th>
+                            <th>금액</th>
+                            <th>내용</th>
+                            <th>분류</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="one-time-expense-body">
+                    </tbody>
+                </table>
+            </div>
         `;
         
-        // 최신 순으로 정렬하여 표시
-        const sortedExpenses = [...DataManager.data.oneTimeExpenses].sort((a, b) => b.date.localeCompare(a.date));
+        oneTimeExpenseList.innerHTML = html;
         
-        sortedExpenses.forEach((expense, i) => {
+        // 기본 필터 (오늘 날짜) 적용
+        this.filterOneTimeExpenses(defaultDate, defaultDate);
+        
+        // 필터 이벤트 리스너 설정
+        this.setupFilterEventListeners();
+    },
+    
+    // 일회성 지출 필터링 함수
+    filterOneTimeExpenses(startDate, endDate) {
+        const tableBody = document.getElementById('one-time-expense-body');
+        if (!tableBody) return;
+        
+        let filteredItems = [];
+        
+        // 필터링 조건 확인
+        const useFilter = startDate && endDate;
+        
+        if (useFilter) {
+            // 날짜 범위로 필터링
+            filteredItems = DataManager.data.oneTimeExpenses.filter(expense => 
+                expense.date && expense.date >= startDate && expense.date <= endDate
+            );
+        } else {
+            // 필터 없이 모든 항목 표시
+            filteredItems = [...DataManager.data.oneTimeExpenses];
+        }
+        
+        // 최신 순으로 정렬하여 표시
+        filteredItems.sort((a, b) => b.date.localeCompare(a.date));
+        
+        // 필터링된 항목이 없는 경우
+        if (filteredItems.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center">해당 기간에 데이터가 없습니다.</td></tr>`;
+            return;
+        }
+        
+        let rowsHtml = '';
+        
+        filteredItems.forEach((expense, i) => {
             // 원래 인덱스 찾기 (삭제 시 필요)
             const originalIndex = DataManager.data.oneTimeExpenses.findIndex(e => 
                 e.date === expense.date && 
@@ -206,32 +273,78 @@ const ExpenseManager = {
             const amountClass = isIncome ? 'text-primary' : 'text-danger';
             const amountPrefix = isIncome ? '+' : '-';
             
-            html += `
+            // 실입금 상태 표시
+            const actualPaymentBadge = expense.isActualPayment ? 
+                '<span class="badge bg-success">✓</span>' : 
+                '<span class="badge bg-secondary">✗</span>';
+            
+            rowsHtml += `
                 <tr>
                     <td>${expense.date}</td>
                     <td class="${amountClass}">${amountPrefix}${Utils.number.formatCurrency(expense.amount)}</td>
                     <td>${expense.description}</td>
-                    <td>${mainCategoryName}${subCategoryName ? ` > ${subCategoryName}` : ''}</td>
-                    <td><button class="btn btn-sm btn-danger delete-one-time-expense" data-index="${originalIndex}">삭제</button></td>
+                    <td>${mainCategoryName}${subCategoryName ? ` > ${subCategoryName}` : ''} ${actualPaymentBadge}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary edit-one-time-expense me-1" data-index="${originalIndex}">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-one-time-expense" data-index="${originalIndex}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
                 </tr>
             `;
         });
         
-        html += `
-                </tbody>
-            </table>
-        `;
+        tableBody.innerHTML = rowsHtml;
         
-        oneTimeExpenseList.innerHTML = html;
+        // 수정 및 삭제 버튼 이벤트 리스너 추가
+        const editButtons = tableBody.querySelectorAll('.edit-one-time-expense');
+        editButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const index = parseInt(e.target.closest('button').dataset.index);
+                // 수정 로직 - 나중에 구현
+                console.log('수정', index);
+            });
+        });
         
-        // 삭제 버튼 이벤트 리스너 추가
-        const deleteButtons = oneTimeExpenseList.querySelectorAll('.delete-one-time-expense');
+        const deleteButtons = tableBody.querySelectorAll('.delete-one-time-expense');
         deleteButtons.forEach(button => {
             button.addEventListener('click', (e) => {
-                const index = parseInt(e.target.dataset.index);
+                const index = parseInt(e.target.closest('button').dataset.index);
                 this.deleteOneTimeExpense(index);
             });
         });
+    },
+    
+    // 필터 이벤트 리스너 설정
+    setupFilterEventListeners() {
+        const applyBtn = document.getElementById('apply-one-time-filter');
+        const resetBtn = document.getElementById('reset-one-time-filter');
+        const startDateInput = document.getElementById('one-time-date-filter-start');
+        const endDateInput = document.getElementById('one-time-date-filter-end');
+        
+        if (applyBtn && resetBtn && startDateInput && endDateInput) {
+            // 필터 적용 버튼
+            applyBtn.addEventListener('click', () => {
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
+                
+                if (!startDate || !endDate) {
+                    alert('시작 날짜와 종료 날짜를 모두 입력해주세요.');
+                    return;
+                }
+                
+                this.filterOneTimeExpenses(startDate, endDate);
+            });
+            
+            // 전체 보기 버튼
+            resetBtn.addEventListener('click', () => {
+                startDateInput.value = '';
+                endDateInput.value = '';
+                this.filterOneTimeExpenses();
+            });
+        }
     },
     
     // 반복 지출 삭제
