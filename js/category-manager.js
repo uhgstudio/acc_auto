@@ -353,11 +353,59 @@ const CategoryManager = {
     
     // 중분류 선택 요소들 업데이트
     updateSubCategorySelectors() {
-        // 필요한 경우에만 구현
+        // 모든 중분류 선택기 찾기
+        const subCategorySelectors = document.querySelectorAll('.sub-category-selector');
+        
+        // 각 중분류 선택기 업데이트
+        subCategorySelectors.forEach(selector => {
+            const currentValue = selector.value;
+            
+            // 선택기 비우기
+            Utils.dom.clearElement(selector);
+            
+            // 기본 옵션 추가
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '중분류 선택';
+            selector.appendChild(defaultOption);
+            
+            // 모든 중분류 옵션 추가
+            DataManager.data.categories.sub.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.code;
+                option.textContent = `${category.name} (${category.code})`;
+                option.dataset.mainCode = category.mainCode; // 대분류 코드 저장
+                
+                // 이전에 선택된 값 유지
+                if (category.code === currentValue) {
+                    option.selected = true;
+                }
+                
+                selector.appendChild(option);
+            });
+            
+            // 중분류 변경 시 대분류 자동 선택 이벤트 추가
+            selector.addEventListener('change', () => {
+                const selectedOption = selector.options[selector.selectedIndex];
+                if (selectedOption && selectedOption.dataset.mainCode) {
+                    // 대응하는 대분류 선택기 찾기 (같은 폼 내에 있는 main-category-selector 클래스를 가진 요소)
+                    const form = selector.closest('form');
+                    if (form) {
+                        const mainSelector = form.querySelector('.main-category-selector');
+                        if (mainSelector) {
+                            mainSelector.value = selectedOption.dataset.mainCode;
+                        }
+                    }
+                }
+            });
+        });
     },
     
     // 중분류 선택 요소에 옵션 채우기 (특정 대분류에 맞는 중분류들)
     populateSubCategorySelector(mainCode, selector) {
+        // 현재 선택된 값 저장
+        const currentValue = selector.value;
+        
         // 선택 요소 비우기
         Utils.dom.clearElement(selector);
         
@@ -374,6 +422,13 @@ const CategoryManager = {
             const option = document.createElement('option');
             option.value = category.code;
             option.textContent = `${category.name} (${category.code})`;
+            option.dataset.mainCode = category.mainCode; // 대분류 코드 저장
+            
+            // 이전에 선택된 값 유지
+            if (category.code === currentValue) {
+                option.selected = true;
+            }
+            
             selector.appendChild(option);
         });
     },

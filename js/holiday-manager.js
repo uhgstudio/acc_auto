@@ -89,94 +89,266 @@ const HolidayManager = {
         const holidayList = document.getElementById('holiday-list');
         holidayList.innerHTML = '<p class="loading-message">공휴일 정보를 가져오는 중입니다...</p>';
         
-        // 한국 공휴일 API URL
-        // 실제로는 API 키 등이 필요할 수 있으며, CORS 정책에 따라 직접 호출이 제한될 수 있습니다.
-        // 여기서는 기본적인 한국 공휴일 데이터를 직접 설정합니다.
+        // 공공데이터포털 공휴일 API URL 및 필요한 매개변수 설정
+        const url = 'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo';
         
-        // 공휴일 데이터 생성 (API 호출 대신 직접 설정)
-        setTimeout(() => {
-            // 해당 년도의 한국 공휴일
-            const koreanHolidays = [
-                { month: 1, day: 1, name: '신정' },
-                { month: 3, day: 1, name: '삼일절' },
-                { month: 5, day: 5, name: '어린이날' },
-                { month: 6, day: 6, name: '현충일' },
-                { month: 8, day: 15, name: '광복절' },
-                { month: 10, day: 3, name: '개천절' },
-                { month: 10, day: 9, name: '한글날' },
-                { month: 12, day: 25, name: '크리스마스' }
-            ];
+        // 년도가 문자열인지 확인하고 변환
+        const yearStr = year.toString();
+        
+        // 데이터 로딩 시작
+        const fetchYearHolidays = async () => {
+            try {
+                // 로딩 메시지 업데이트
+                holidayList.innerHTML = `<p class="loading-message">${yearStr}년 공휴일 정보를 가져오는 중입니다...</p>`;
+                
+                // 한 번의 요청으로 전체 년도 공휴일 가져오기
+                const yearlyHolidays = await this.fetchYearlyHolidays(yearStr);
+                
+                // 공휴일 데이터가 있는 경우
+                if (yearlyHolidays && yearlyHolidays.length > 0) {
+                    // 기존 공휴일 데이터 초기화
+                    if (!DataManager.data.holidays[yearStr]) {
+                        DataManager.data.holidays[yearStr] = [];
+                    }
+                    
+                    // 새로 가져온 공휴일 데이터 추가 (중복 체크)
+                    yearlyHolidays.forEach(holiday => {
+                        // 이미 있는 공휴일인지 확인
+                        const exists = DataManager.data.holidays[yearStr].some(
+                            h => h.month === holiday.month && h.day === holiday.day
+                        );
+                        
+                        if (!exists) {
+                            DataManager.data.holidays[yearStr].push(holiday);
+                        }
+                    });
+                    
+                    // 날짜순 정렬
+                    DataManager.data.holidays[yearStr].sort((a, b) => {
+                        if (a.month === b.month) {
+                            return a.day - b.day;
+                        }
+                        return a.month - b.month;
+                    });
+                    
+                    // 데이터 저장
+                    DataManager.saveData();
+                    
+                    // 공휴일 목록 다시 렌더링
+                    this.renderHolidays();
+                    
+                    // 달력 업데이트를 위한 이벤트 발생
+                    document.dispatchEvent(new CustomEvent('expenses-updated'));
+                    
+                    // 성공 메시지 표시
+                    alert(`${yearStr}년 공휴일 정보가 성공적으로 가져와졌습니다.`);
+                } else {
+                    // 데이터가 없는 경우
+                    holidayList.innerHTML = '<p class="error-message">공휴일 정보를 찾을 수 없습니다.</p>';
+                    setTimeout(() => this.renderHolidays(), 2000);
+                }
+            } catch (error) {
+                console.error('공휴일 데이터 가져오기 실패:', error);
+                holidayList.innerHTML = '<p class="error-message">공휴일 정보를 가져오는 중 오류가 발생했습니다.</p>';
+                setTimeout(() => this.renderHolidays(), 2000);
+            }
+        };
+        
+        // 공휴일 데이터 가져오기 시작
+        fetchYearHolidays();
+    },
+    
+    // 특정 년도의 전체 공휴일 데이터 가져오기
+    fetchYearlyHolidays(year) {
+        return new Promise((resolve, reject) => {
+            // 공공데이터포털 API URL 및 필요한 매개변수 설정
+            const url = 'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo';
             
-            // 음력 공휴일 (매년 날짜가 다름)
-            // 실제로는 음력->양력 변환 API 호출 필요
-            // 여기서는 대략적인 날짜로 설정
-            const lunarHolidays = {
-                '2023': [
-                    { month: 1, day: 22, name: '설날' },
-                    { month: 5, day: 29, name: '부처님오신날' },
-                    { month: 9, day: 29, name: '추석' }
-                ],
-                '2024': [
-                    { month: 2, day: 10, name: '설날' },
-                    { month: 5, day: 15, name: '부처님오신날' },
-                    { month: 9, day: 17, name: '추석' }
-                ],
-                '2025': [
-                    { month: 1, day: 28, name: '설날' },
-                    { month: 5, day: 5, name: '부처님오신날' },
-                    { month: 10, day: 7, name: '추석' }
-                ]
+            // 로컬 스토리지에서 API 키 가져오기 (디코딩된 값 사용)
+            const serviceKey = "FtHeLbjpVuh3T/f1ni81E0sVXqCBABBj5nC11MV591pdnc5gzHS7PGeRNQTJT5nezvJ5UE5cAiQ4Opfb94CZ0A==";
+            
+            // API 키가 없는 경우
+            if (!serviceKey) {
+                reject(new Error('API 키가 설정되지 않았습니다.'));
+                return;
+            }
+            
+            // 년도의 공휴일 정보 요청 URL 생성 (월 파라미터 없이 년도만 전달)
+            const queryParams = `?serviceKey=${encodeURIComponent(serviceKey)}&solYear=${year}&numOfRows=100&_type=json`;
+            const requestUrl = url + queryParams;
+            
+            // XMLHttpRequest 생성
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', requestUrl);
+            xhr.onreadystatechange = function() {
+                if (this.readyState === 4) {
+                    if (this.status === 200) {
+                        try {
+                            // 응답이 JSON인지 확인
+                            let responseData;
+                            if (this.responseText.trim().startsWith('{')) {
+                                // JSON 응답 파싱
+                                responseData = JSON.parse(this.responseText);
+                                
+                                // 결과 코드 확인
+                                const resultCode = responseData.response?.header?.resultCode;
+                                const resultMsg = responseData.response?.header?.resultMsg;
+                                
+                                // 결과가 정상이 아닌 경우
+                                if (resultCode !== "00") {
+                                    reject(new Error(`API 오류: ${resultMsg || '알 수 없는 오류'}`));
+                                    return;
+                                }
+                                
+                                // 공휴일 데이터 추출
+                                const items = responseData.response?.body?.items?.item || [];
+                                const holidays = [];
+                                
+                                // 단일 객체인 경우 배열로 변환
+                                const itemArray = Array.isArray(items) ? items : [items];
+                                
+                                // 아이템이 없는 경우 빈 배열 반환
+                                if (itemArray.length === 0) {
+                                    resolve([]);
+                                    return;
+                                }
+                                
+                                itemArray.forEach(item => {
+                                    if (!item.locdate) return;
+                                    
+                                    // locdate 형식: YYYYMMDD (문자열)
+                                    const locdate = item.locdate.toString();
+                                    const monthFromData = parseInt(locdate.substring(4, 6));
+                                    const dayFromData = parseInt(locdate.substring(6, 8));
+                                    const holidayName = item.dateName || "공휴일";
+                                    
+                                    holidays.push({
+                                        month: monthFromData,
+                                        day: dayFromData,
+                                        name: holidayName
+                                    });
+                                });
+                                
+                                resolve(holidays);
+                            } else {
+                                // XML 응답 파싱
+                                const parser = new DOMParser();
+                                const xmlDoc = parser.parseFromString(this.responseText, "text/xml");
+                                
+                                // 오류 코드 확인
+                                const resultCode = xmlDoc.getElementsByTagName("resultCode")[0]?.textContent;
+                                const resultMsg = xmlDoc.getElementsByTagName("resultMsg")[0]?.textContent;
+                                
+                                // 결과가 정상이 아닌 경우
+                                if (resultCode !== "00") {
+                                    reject(new Error(`API 오류: ${resultMsg || '알 수 없는 오류'}`));
+                                    return;
+                                }
+                                
+                                // 공휴일 데이터 추출
+                                const items = xmlDoc.getElementsByTagName("item");
+                                const holidays = [];
+                                
+                                // 아이템이 없는 경우 빈 배열 반환
+                                if (!items || items.length === 0) {
+                                    resolve([]);
+                                    return;
+                                }
+                                
+                                for (let i = 0; i < items.length; i++) {
+                                    const item = items[i];
+                                    
+                                    // locdate 형식: YYYYMMDD
+                                    const locdate = item.getElementsByTagName("locdate")[0]?.textContent;
+                                    if (!locdate) continue;
+                                    
+                                    const monthFromData = parseInt(locdate.substring(4, 6));
+                                    const dayFromData = parseInt(locdate.substring(6, 8));
+                                    const holidayName = item.getElementsByTagName("dateName")[0]?.textContent || "공휴일";
+                                    
+                                    holidays.push({
+                                        month: monthFromData,
+                                        day: dayFromData,
+                                        name: holidayName
+                                    });
+                                }
+                                
+                                resolve(holidays);
+                            }
+                        } catch (error) {
+                            console.error('응답 파싱 오류:', error);
+                            reject(error);
+                        }
+                    } else {
+                        // HTTP 오류 처리
+                        reject(new Error(`HTTP 오류: ${this.status} ${this.statusText}`));
+                    }
+                }
             };
             
-            // 해당 년도 공휴일 목록 초기화 또는 생성
-            if (!DataManager.data.holidays[year]) {
-                DataManager.data.holidays[year] = [];
-            }
+            xhr.onerror = function() {
+                reject(new Error('네트워크 오류가 발생했습니다.'));
+            };
             
-            // 양력 공휴일 추가
-            koreanHolidays.forEach(holiday => {
-                // 중복 체크
-                const exists = DataManager.data.holidays[year].some(
-                    h => h.month === holiday.month && h.day === holiday.day
-                );
-                
-                if (!exists) {
-                    DataManager.data.holidays[year].push(holiday);
-                }
-            });
-            
-            // 음력 공휴일 추가 (해당 년도에 있는 경우만)
-            if (lunarHolidays[year]) {
-                lunarHolidays[year].forEach(holiday => {
-                    // 중복 체크
-                    const exists = DataManager.data.holidays[year].some(
-                        h => h.month === holiday.month && h.day === holiday.day
-                    );
-                    
-                    if (!exists) {
-                        DataManager.data.holidays[year].push(holiday);
-                    }
-                });
-            }
-            
-            // 날짜 순으로 정렬
-            DataManager.data.holidays[year].sort((a, b) => {
-                if (a.month === b.month) {
-                    return a.day - b.day;
-                }
-                return a.month - b.month;
-            });
-            
-            // 데이터 저장
-            DataManager.saveData();
-            
-            // 공휴일 목록 다시 렌더링
-            this.renderHolidays();
-            
-            // 달력 업데이트를 위한 이벤트 발생
-            document.dispatchEvent(new CustomEvent('expenses-updated'));
-            
-        }, 1000); // 1초 지연 (API 호출 시간 시뮬레이션)
+            xhr.send();
+        });
+    },
+    
+    // 한국 공휴일 데이터 (API 호출 실패 시 대체용)
+    getDefaultHolidays(year) {
+        // 양력 공휴일
+        const fixedHolidays = [
+            { month: 1, day: 1, name: '신정' },
+            { month: 3, day: 1, name: '삼일절' },
+            { month: 5, day: 5, name: '어린이날' },
+            { month: 6, day: 6, name: '현충일' },
+            { month: 8, day: 15, name: '광복절' },
+            { month: 10, day: 3, name: '개천절' },
+            { month: 10, day: 9, name: '한글날' },
+            { month: 12, day: 25, name: '크리스마스' }
+        ];
+        
+        // 음력 공휴일 (연도별로 다름)
+        // 실제로는 정확한 날짜를 알기 위해 API를 사용해야 함
+        const lunarHolidays = {
+            '2023': [
+                { month: 1, day: 22, name: '설날' },
+                { month: 1, day: 23, name: '설날' },
+                { month: 1, day: 24, name: '설날' },
+                { month: 5, day: 29, name: '부처님오신날' },
+                { month: 9, day: 28, name: '추석' },
+                { month: 9, day: 29, name: '추석' },
+                { month: 9, day: 30, name: '추석' }
+            ],
+            '2024': [
+                { month: 2, day: 9, name: '설날' },
+                { month: 2, day: 10, name: '설날' },
+                { month: 2, day: 11, name: '설날' },
+                { month: 5, day: 15, name: '부처님오신날' },
+                { month: 9, day: 16, name: '추석' },
+                { month: 9, day: 17, name: '추석' },
+                { month: 9, day: 18, name: '추석' }
+            ],
+            '2025': [
+                { month: 1, day: 28, name: '설날' },
+                { month: 1, day: 29, name: '설날' },
+                { month: 1, day: 30, name: '설날' },
+                { month: 5, day: 5, name: '부처님오신날' },
+                { month: 10, day: 6, name: '추석' },
+                { month: 10, day: 7, name: '추석' },
+                { month: 10, day: 8, name: '추석' }
+            ]
+        };
+        
+        const yearStr = year.toString();
+        const holidays = [...fixedHolidays];
+        
+        // 해당 연도의 음력 공휴일이 있으면 추가
+        if (lunarHolidays[yearStr]) {
+            holidays.push(...lunarHolidays[yearStr]);
+        }
+        
+        return holidays;
     },
     
     // 요일 문자열 반환
@@ -268,6 +440,39 @@ const HolidayManager = {
                 } else {
                     alert('날짜와 공휴일 명을 모두 입력해주세요.');
                 }
+            });
+        }
+        
+        // 공공데이터포털 API 키 설정 폼 이벤트
+        const fetchBtn = document.getElementById('fetch-holidays-btn');
+        if (fetchBtn) {
+            // API 키 입력 다이얼로그 표시 후 공휴일 가져오기
+            fetchBtn.addEventListener('click', () => {
+                // 로컬 스토리지에서 이전에 저장된 API 키 가져오기
+                const savedApiKey = localStorage.getItem('holidayApiKey') || '';
+                
+                // API 키 입력 다이얼로그 표시
+                const apiKey = prompt(
+                    '공공데이터포털의 디코딩된 서비스 키를 입력하세요.\n' +
+                    '(공공데이터포털 > 마이페이지 > 개발계정에서 확인할 수 있습니다.)', 
+                    savedApiKey
+                );
+                
+                // 취소를 누르거나 빈 문자열을 입력한 경우
+                if (apiKey === null) {
+                    return;
+                }
+                
+                if (apiKey.trim() === '') {
+                    alert('유효한 API 키를 입력해주세요.');
+                    return;
+                }
+                
+                // API 키 로컬 스토리지에 저장
+                localStorage.setItem('holidayApiKey', apiKey);
+                
+                // 공휴일 데이터 가져오기
+                this.fetchHolidays(DataManager.data.year);
             });
         }
     }

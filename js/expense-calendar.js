@@ -7,6 +7,11 @@ const ExpenseCalendar = {
     initialize() {
         this.renderCalendar();
         this.setupCalendarEventListeners();
+        
+        // 초기화 시점에 CategoryManager의 중분류 선택기도 초기화
+        if (CategoryManager && typeof CategoryManager.updateSubCategorySelectors === 'function') {
+            CategoryManager.updateSubCategorySelectors();
+        }
     },
     
     // 달력 렌더링
@@ -1054,7 +1059,7 @@ const ExpenseCalendar = {
         popup.id = 'edit-expense-popup';
         popup.className = 'expense-popup';
         
-        // 팝업 내용 생성 (ID 필드에 실제 고유 ID 저장) - 금액 필드를 맨 아래로 이동
+        // 팝업 내용 생성 (ID 필드에 실제 고유 ID 저장) - 금액 필드를 실입금 체크박스 위로 이동
         popup.innerHTML = `
             <div class="popup-content">
                 <div class="popup-header">
@@ -1085,14 +1090,14 @@ const ExpenseCalendar = {
                             <select id="edit-expense-sub-category" class="form-control sub-category-selector" data-selected="${expense.subCategory || ''}"></select>
                         </div>
                         <div class="mb-3">
+                            <label for="edit-expense-amount" class="form-label">금액:</label>
+                            <input type="number" id="edit-expense-amount" class="form-control" value="${expense.amount}" placeholder="금액" required>
+                        </div>
+                        <div class="mb-3">
                             <div class="form-check">
                                 <input type="checkbox" id="edit-expense-actual-payment" class="form-check-input" ${expense.isActualPayment === true ? 'checked' : ''}>
                                 <label for="edit-expense-actual-payment" class="form-check-label">실입금 항목</label>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit-expense-amount" class="form-label">금액:</label>
-                            <input type="number" id="edit-expense-amount" class="form-control" value="${expense.amount}" placeholder="금액" required>
                         </div>
                         <button type="submit" class="btn btn-primary">저장</button>
                     </form>
@@ -1121,34 +1126,29 @@ const ExpenseCalendar = {
         // 대분류 선택기 초기화 및 선택된 값 설정
         CategoryManager.updateMainCategorySelectors();
         
+        // 중분류 선택기 초기화 - 모든 중분류 항목 표시
+        CategoryManager.updateSubCategorySelectors();
+        
         // 선택된 대분류 설정
         const mainCategorySelect = document.getElementById('edit-expense-main-category');
         if (mainCategorySelect) {
             mainCategorySelect.value = expense.mainCategory;
             
-            // 대분류에 맞는 중분류 옵션 업데이트
-            const subCategorySelect = document.getElementById('edit-expense-sub-category');
-            CategoryManager.populateSubCategorySelector(expense.mainCategory, subCategorySelect);
-            
             // 선택된 중분류 설정
+            const subCategorySelect = document.getElementById('edit-expense-sub-category');
             if (expense.subCategory && subCategorySelect) {
                 subCategorySelect.value = expense.subCategory;
             }
             
-            // 대분류 변경 시 중분류 옵션 업데이트
-            mainCategorySelect.addEventListener('change', () => {
-                const mainCode = mainCategorySelect.value;
-                if (mainCode) {
-                    CategoryManager.populateSubCategorySelector(mainCode, subCategorySelect);
-                } else {
-                    // 대분류가 선택되지 않은 경우 중분류 초기화
-                    Utils.dom.clearElement(subCategorySelect);
-                    const defaultOption = document.createElement('option');
-                    defaultOption.value = '';
-                    defaultOption.textContent = '중분류 선택';
-                    subCategorySelect.appendChild(defaultOption);
-                }
-            });
+            // 중분류 선택 시 대분류 자동 선택 이벤트 연결
+            if (subCategorySelect) {
+                subCategorySelect.addEventListener('change', () => {
+                    const selectedOption = subCategorySelect.options[subCategorySelect.selectedIndex];
+                    if (selectedOption && selectedOption.dataset.mainCode) {
+                        mainCategorySelect.value = selectedOption.dataset.mainCode;
+                    }
+                });
+            }
         }
         
         // 폼 제출 이벤트
@@ -1359,7 +1359,7 @@ const ExpenseCalendar = {
         popup.id = 'add-expense-popup';
         popup.className = 'expense-popup';
         
-        // 팝업 내용 생성 - 금액 입력창을 제일 아래로 이동
+        // 팝업 내용 생성 - 금액 필드를 실입금 항목 체크박스 위로 이동
         popup.innerHTML = `
             <div class="popup-content">
                 <div class="popup-header">
@@ -1389,14 +1389,14 @@ const ExpenseCalendar = {
                             <select id="expense-sub-category" class="form-control sub-category-selector"></select>
                         </div>
                         <div class="mb-3">
+                            <label for="expense-amount" class="form-label">금액:</label>
+                            <input type="number" id="expense-amount" class="form-control" placeholder="금액" required>
+                        </div>
+                        <div class="mb-3">
                             <div class="form-check">
                                 <input type="checkbox" id="expense-actual-payment" class="form-check-input">
                                 <label for="expense-actual-payment" class="form-check-label">실입금 항목</label>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="expense-amount" class="form-label">금액:</label>
-                            <input type="number" id="expense-amount" class="form-control" placeholder="금액" required>
                         </div>
                         <button type="submit" class="btn btn-primary">등록</button>
                     </form>
@@ -1424,6 +1424,23 @@ const ExpenseCalendar = {
         
         // 대분류 선택기 초기화
         CategoryManager.updateMainCategorySelectors();
+        
+        // 중분류 선택기 초기화 - 모든 중분류 항목 표시
+        CategoryManager.updateSubCategorySelectors();
+        
+        // 중분류 선택 시 대분류 자동 선택 이벤트 연결
+        const subCategorySelect = document.getElementById('expense-sub-category');
+        if (subCategorySelect) {
+            subCategorySelect.addEventListener('change', () => {
+                const selectedOption = subCategorySelect.options[subCategorySelect.selectedIndex];
+                if (selectedOption && selectedOption.dataset.mainCode) {
+                    const mainCategorySelect = document.getElementById('expense-main-category');
+                    if (mainCategorySelect) {
+                        mainCategorySelect.value = selectedOption.dataset.mainCode;
+                    }
+                }
+            });
+        }
         
         // 폼 제출 이벤트
         const addExpenseForm = popup.querySelector('#add-expense-form');
@@ -1463,25 +1480,6 @@ const ExpenseCalendar = {
                 alert('지출 등록 중 오류가 발생했습니다: ' + error.message);
             }
         });
-        
-        // 대분류 변경 시 중분류 업데이트
-        const mainCategorySelect = document.getElementById('expense-main-category');
-        const subCategorySelect = document.getElementById('expense-sub-category');
-        
-        mainCategorySelect.addEventListener('change', () => {
-            const mainCode = mainCategorySelect.value;
-            if (mainCode) {
-                // 대분류에 맞는 중분류 옵션 업데이트
-                CategoryManager.populateSubCategorySelector(mainCode, subCategorySelect);
-            } else {
-                // 대분류가 선택되지 않은 경우 중분류 초기화
-                Utils.dom.clearElement(subCategorySelect);
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = '중분류 선택';
-                subCategorySelect.appendChild(defaultOption);
-            }
-        });
     },
     
     // 지출 추가 폼을 현재 팝업 내에 표시 (상세보기에서 닫지 않고 사용)
@@ -1516,7 +1514,7 @@ const ExpenseCalendar = {
             defaultDate = `${defaultDate}-01`;
         }
         
-        // 팝업 내용 생성 - 금액 필드를 맨 아래로 이동
+        // 팝업 내용 생성 - 금액 필드를 실입금 체크박스 위로 이동
         inlinePopup.innerHTML = `
             <div class="popup-content">
                 <div class="popup-header">
@@ -1546,14 +1544,14 @@ const ExpenseCalendar = {
                             <select id="add-expense-inline-sub-category" class="form-control sub-category-selector"></select>
                         </div>
                         <div class="mb-3">
+                            <label for="add-expense-inline-amount" class="form-label">금액:</label>
+                            <input type="number" id="add-expense-inline-amount" class="form-control" placeholder="금액" required>
+                        </div>
+                        <div class="mb-3">
                             <div class="form-check">
                                 <input type="checkbox" id="add-expense-inline-actual-payment" class="form-check-input" checked>
                                 <label for="add-expense-inline-actual-payment" class="form-check-label">실입금 항목</label>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="add-expense-inline-amount" class="form-label">금액:</label>
-                            <input type="number" id="add-expense-inline-amount" class="form-control" placeholder="금액" required>
                         </div>
                         <button type="submit" class="btn btn-primary">저장</button>
                         <button type="button" id="cancel-add-expense-inline" class="btn btn-secondary">취소</button>
@@ -1576,22 +1574,18 @@ const ExpenseCalendar = {
         // 대분류 선택기 초기화
         CategoryManager.updateMainCategorySelectors();
         
-        // 대분류 변경 이벤트 - 중분류 옵션 업데이트
-        const mainCategorySelect = document.getElementById('add-expense-inline-main-category');
-        const subCategorySelect = document.getElementById('add-expense-inline-sub-category');
+        // 중분류 선택기 초기화 - 모든 중분류 항목 표시
+        CategoryManager.updateSubCategorySelectors();
         
-        if (mainCategorySelect && subCategorySelect) {
-            mainCategorySelect.addEventListener('change', () => {
-                const mainCode = mainCategorySelect.value;
-                if (mainCode) {
-                    CategoryManager.populateSubCategorySelector(mainCode, subCategorySelect);
-                } else {
-                    // 대분류가 선택되지 않은 경우 중분류 초기화
-                    Utils.dom.clearElement(subCategorySelect);
-                    const defaultOption = document.createElement('option');
-                    defaultOption.value = '';
-                    defaultOption.textContent = '중분류 선택';
-                    subCategorySelect.appendChild(defaultOption);
+        // 중분류 선택 시 대분류 자동 선택 이벤트 연결
+        const subCategorySelect = document.getElementById('add-expense-inline-sub-category');
+        const mainCategorySelect = document.getElementById('add-expense-inline-main-category');
+        
+        if (subCategorySelect && mainCategorySelect) {
+            subCategorySelect.addEventListener('change', () => {
+                const selectedOption = subCategorySelect.options[subCategorySelect.selectedIndex];
+                if (selectedOption && selectedOption.dataset.mainCode) {
+                    mainCategorySelect.value = selectedOption.dataset.mainCode;
                 }
             });
         }
