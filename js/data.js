@@ -13,20 +13,80 @@ const DataManager = {
         categories: {
             main: [], // 대분류 (예: [{code: 'LIVING', name: '생활비', type: 'expense'}, {code: 'FINANCE', name: '금융', type: 'expense'}, ...])
             sub: []   // 중분류 (예: [{mainCode: 'LIVING', code: 'FOOD', name: '식비'}, ...])
-        }
+        },
+        nextId: 1  // ID 카운터 추가
     },
 
     // 데이터 초기화
     initialize() {
-        this.loadData();
-        if (Object.keys(this.data.categories.main).length === 0) {
+        // 데이터 구조 초기화
+        this.data = {
+            recurringExpenses: [],
+            oneTimeExpenses: [],
+            generatedExpenses: [],
+            year: new Date().getFullYear(),
+            holidays: {},
+            categories: {
+                main: [],
+                sub: []
+            },
+            nextId: 1  // ID 카운터 추가
+        };
+        
+        // 로컬 스토리지에서 데이터 로드
+        const hasData = this.loadData();
+        
+        // 기존 데이터가 없는 경우 기본 데이터 설정
+        if (!hasData || (this.data.recurringExpenses.length === 0 && 
+            this.data.oneTimeExpenses.length === 0 &&
+            !this.data.categories.main.length)) {
             this.setupDefaultData();
         }
         
-        // 기존 데이터 마이그레이션 (frequency 필드 추가)
+        // 데이터 마이그레이션 처리
         this.migrateData();
         
+        // 기존에 수정된 반복 항목 저장
+        const modifiedRecurringItems = {};
+        
+        // 수정된 반복 항목 식별
+        this.data.oneTimeExpenses.forEach(expense => {
+            if (expense.recurringId) {
+                const key = `${expense.recurringId}-${expense.date}`;
+                modifiedRecurringItems[key] = expense;
+            }
+        });
+        
+        // generatedExpenses 비우기만 하고 반복 지출 데이터 재생성은 하지 않음
+        this.data.generatedExpenses = [];
+        
+        // 먼저 반복 지출로 생성된 항목만 필터링하여 제거
+        this.data.oneTimeExpenses = this.data.oneTimeExpenses.filter(
+            expense => !expense.recurringId
+        );
+        
+        // 모든 반복 지출 항목에 대해 데이터 생성 (수정된 항목 보존)
+        this.data.recurringExpenses.forEach((_, index) => {
+            this.generateRecurringExpenseData(index, modifiedRecurringItems);
+        });
+        
+        // oneTimeExpenses에서 recurringId가 있는 중복 항목 제거
+        // this.cleanupDuplicateRecurringItems(); // 이 부분은 더 이상 필요하지 않음
+        
+        // 이제 데이터 저장
+        this.saveData();
+        console.log('데이터 초기화 완료, 총 항목 수:', this.data.oneTimeExpenses.length);
+        
         return this.data;
+    },
+    
+    // oneTimeExpenses에서 recurringId가 있는 항목 제거 (중복 정리) -> 이제는 generatedExpenses만 비우도록 변경
+    cleanupDuplicateRecurringItems() {
+        // generatedExpenses는 비우고, oneTimeExpenses는 그대로 유지
+        this.data.generatedExpenses = [];
+        
+        // 변경사항 저장
+        this.saveData();
     },
     
     // 기존 데이터 구조 업데이트
@@ -35,6 +95,33 @@ const DataManager = {
         if (!this.data.generatedExpenses) {
             this.data.generatedExpenses = [];
         }
+        
+        // nextId가 없으면 추가
+        if (!this.data.nextId) {
+            this.data.nextId = 1;
+        }
+        
+        // 모든 oneTimeExpenses 항목 ID 확인 및 설정
+        let maxId = 0;
+        
+        this.data.oneTimeExpenses.forEach(expense => {
+            if (!expense.id) {
+                // 임시 ID 할당 (나중에 다시 설정)
+                expense.id = -1;
+            } else if (expense.id > maxId) {
+                maxId = expense.id;
+            }
+        });
+        
+        // nextId는 최소한 현재 최대 ID + 1이어야 함
+        this.data.nextId = Math.max(this.data.nextId, maxId + 1);
+        
+        // ID가 없는 항목에 새 ID 할당
+        this.data.oneTimeExpenses.forEach(expense => {
+            if (expense.id === -1) {
+                expense.id = this.getNextId();
+            }
+        });
         
         // frequency 필드가 없는 기존 반복 지출 항목에 'monthly' 값 추가
         this.data.recurringExpenses.forEach(expense => {
@@ -210,33 +297,74 @@ const DataManager = {
 
     // 데이터 로컬스토리지에서 불러오기
     loadData() {
-        const savedData = localStorage.getItem('expenseData');
-        if (savedData) {
-            this.data = JSON.parse(savedData);
+        try {
+            // 로컬 스토리지에서 데이터 가져오기
+            const savedData = localStorage.getItem('expenseData');
             
-            // 기존 데이터에 holidays 필드가 없으면 추가
-            if (!this.data.holidays) {
-                this.data.holidays = {};
+            if (savedData) {
+                console.log('로컬 스토리지에서 데이터 로드 시도');
+                const parsedData = JSON.parse(savedData);
+                
+                // 데이터 유효성 검사
+                if (typeof parsedData === 'object' && 
+                    Array.isArray(parsedData.oneTimeExpenses) && 
+                    Array.isArray(parsedData.recurringExpenses)) {
+                    
+                    // 기존 데이터에 필수 필드가 없으면 추가 (하위 호환성 유지)
+                    if (!parsedData.holidays) parsedData.holidays = {};
+                    if (!parsedData.categories) {
+                        parsedData.categories = {
+                            main: [],
+                            sub: []
+                        };
+                    }
+                    if (!parsedData.generatedExpenses) parsedData.generatedExpenses = [];
+                    if (!parsedData.nextId) parsedData.nextId = 1;
+                    
+                    this.data = parsedData;
+                    console.log('데이터 로드 성공: 일회성 지출 ' + this.data.oneTimeExpenses.length + '개, 반복 지출 ' + this.data.recurringExpenses.length + '개');
+                    return true;
+                } else {
+                    console.warn('저장된 데이터 형식이 올바르지 않습니다. 기본 데이터로 초기화합니다.');
+                    this.setupDefaultData();
+                    return false;
+                }
+            } else {
+                console.log('저장된 데이터가 없습니다. 기본 데이터로 초기화합니다.');
+                this.setupDefaultData();
+                return false;
             }
-            
-            // 기존 데이터에 categories 필드가 없으면 추가
-            if (!this.data.categories) {
-                this.data.categories = {
-                    main: [],
-                    sub: []
-                };
-            }
-            
-            // 기존 데이터에 generatedExpenses 필드가 없으면 추가
-            if (!this.data.generatedExpenses) {
-                this.data.generatedExpenses = [];
-            }
+        } catch (error) {
+            console.error('데이터 로딩 중 오류 발생:', error);
+            // 오류 발생 시 로컬 스토리지 초기화 및 기본 데이터 설정
+            localStorage.removeItem('expenseData');
+            this.setupDefaultData();
+            return false;
         }
     },
 
     // 데이터 로컬스토리지에 저장하기
     saveData() {
-        localStorage.setItem('expenseData', JSON.stringify(this.data));
+        try {
+            const dataStr = JSON.stringify(this.data);
+            localStorage.setItem('expenseData', dataStr);
+            console.log('로컬 스토리지에 데이터 저장 성공');
+            
+            // 저장 검증
+            const savedData = localStorage.getItem('expenseData');
+            if (!savedData) {
+                console.error('데이터 저장 후 검증 실패: 저장된 데이터가 없습니다.');
+            }
+            return true;
+        } catch (error) {
+            console.error('로컬 스토리지에 데이터 저장 중 오류 발생:', error);
+            
+            // 용량 초과 등의 문제인 경우 알림
+            if (error.name === 'QuotaExceededError') {
+                alert('브라우저 저장 공간이 부족합니다. 불필요한 데이터를 정리하고 다시 시도해주세요.');
+            }
+            return false;
+        }
     },
 
     // 데이터 백업하기 (JSON 파일로 다운로드)
@@ -291,7 +419,8 @@ const DataManager = {
             categories: {
                 main: [],
                 sub: []
-            }
+            },
+            nextId: 1  // ID 카운터 추가
         };
         this.setupDefaultData();
         this.saveData();
@@ -378,6 +507,7 @@ const DataManager = {
     // 일회성 지출 추가
     addOneTimeExpense(date, amount, description, mainCategory, subCategory, isActualPayment = true) {
         const newExpense = {
+            id: this.getNextId(),  // 고유 ID 추가
             date,
             amount: parseFloat(amount),
             description,
@@ -393,46 +523,152 @@ const DataManager = {
     },
     
     // 일회성 지출 삭제
-    removeOneTimeExpense(index) {
-        this.data.oneTimeExpenses.splice(index, 1);
-        this.saveData();
-        return this.data.oneTimeExpenses;
-    },
-
-    // 일회성 지출 수정
-    updateOneTimeExpense(id, date, amount, description, mainCategory, subCategory, isActualPayment = true) {
-        // id에서 인덱스 추출 (id 형식: "onetime-index")
-        const idParts = id.toString().split('-');
-        if (idParts.length === 2 && idParts[0] === 'onetime') {
-            const index = parseInt(idParts[1]);
-            
-            // 유효한 인덱스인지 확인
-            if (index >= 0 && index < this.data.oneTimeExpenses.length) {
-                // 수정할 항목
-                const expense = this.data.oneTimeExpenses[index];
-                
-                // 수정하지 않을 기존 데이터 보존 (recurringId 등)
-                const recurringId = expense.recurringId;
-                
-                // 항목 업데이트
-                this.data.oneTimeExpenses[index] = {
-                    date,
-                    amount: parseFloat(amount),
-                    description,
-                    mainCategory,
-                    subCategory,
-                    isActualPayment,
-                    recurringId // 반복 항목과의 연결 유지
-                };
-                
-                this.saveData();
-                return this.data.oneTimeExpenses;
-            }
+    removeOneTimeExpense(id) {
+        const index = this.findOneTimeExpenseIndexById(id);
+        if (index !== -1) {
+            this.data.oneTimeExpenses.splice(index, 1);
+            this.saveData();
+            return this.data.oneTimeExpenses;
         }
         
         throw new Error('유효하지 않은 ID입니다.');
     },
+    
+    // ID로 일회성 지출 인덱스 찾기
+    findOneTimeExpenseIndexById(id) {
+        // ID가 문자열로 전달될 경우 처리
+        if (typeof id === 'string' && id.startsWith('onetime-')) {
+            const idParts = id.split('-');
+            if (idParts.length === 2) {
+                id = parseInt(idParts[1]);
+            }
+        }
+        
+        // ID로 직접 찾기
+        for (let i = 0; i < this.data.oneTimeExpenses.length; i++) {
+            if (this.data.oneTimeExpenses[i].id == id) {
+                return i;
+            }
+        }
+        return -1;
+    },
+    
+    // 일회성 지출의 실입금 여부만 변경
+    toggleActualPayment(id) {
+        // 디버깅: 전달받은 ID 확인
+        console.log('toggleActualPayment에 전달된 ID:', id);
+        
+        // ID가 문자열로 전달될 수 있으므로 숫자로 변환
+        if (typeof id === 'string' && id.startsWith('onetime-')) {
+            const idParts = id.split('-');
+            if (idParts.length === 2) {
+                id = parseInt(idParts[1]);
+            }
+        }
+        
+        // 인덱스 찾기
+        const index = this.findOneTimeExpenseIndexById(id);
+        console.log('찾은 인덱스:', index);
+        
+        // 유효한 인덱스인지 확인
+        if (index !== -1) {
+            // 실입금 여부 토글 전 값 확인
+            console.log('토글 전 isActualPayment 값:', this.data.oneTimeExpenses[index].isActualPayment);
+            
+            // 실입금 여부 토글
+            this.data.oneTimeExpenses[index].isActualPayment = !this.data.oneTimeExpenses[index].isActualPayment;
+            
+            // 토글 후 값 확인
+            console.log('토글 후 isActualPayment 값:', this.data.oneTimeExpenses[index].isActualPayment);
+            
+            // 로컬 스토리지에 확실히 저장
+            try {
+                this.saveData();
+                console.log('실입금 상태 변경 후 저장 완료. 로컬 스토리지에 저장된 데이터:', 
+                          JSON.parse(localStorage.getItem('expenseData')).oneTimeExpenses.length, '개 항목');
+                
+                // 확인을 위해 변경된 항목의 상태를 다시 확인
+                const savedData = JSON.parse(localStorage.getItem('expenseData'));
+                const savedItem = savedData.oneTimeExpenses.find(item => item.id === this.data.oneTimeExpenses[index].id);
+                if (savedItem) {
+                    console.log('저장된 항목의 실입금 상태:', savedItem.isActualPayment);
+                }
+            } catch (error) {
+                console.error('데이터 저장 중 오류 발생:', error);
+                // 에러 발생 시 다시 시도
+                setTimeout(() => this.saveData(), 100);
+            }
+            
+            return this.data.oneTimeExpenses[index];
+        }
+        
+        console.error('유효하지 않은 ID:', id);
+        throw new Error('유효하지 않은 ID입니다.');
+    },
 
+    // 일회성 지출 수정
+    updateOneTimeExpense(id, date, amount, description, mainCategory, subCategory, isActualPayment = true) {
+        console.log('updateOneTimeExpense 호출됨. ID:', id, typeof id);
+        
+        // findOneTimeExpenseIndexById 함수를 사용하여 인덱스 찾기
+        const index = this.findOneTimeExpenseIndexById(id);
+        console.log('찾은 인덱스:', index);
+        
+        // 유효한 인덱스인지 확인
+        if (index !== -1) {
+            // 수정할 항목
+            const expense = this.data.oneTimeExpenses[index];
+            console.log('수정 전 항목:', expense);
+            
+            // 수정하지 않을 기존 데이터 보존 (recurringId, id 등)
+            const recurringId = expense.recurringId;
+            const originalId = expense.id;
+            
+            // 항목 업데이트
+            this.data.oneTimeExpenses[index] = {
+                id: originalId,  // 기존 ID 유지
+                date,
+                amount: parseFloat(amount),
+                description,
+                mainCategory,
+                subCategory,
+                isActualPayment,
+                recurringId, // 반복 항목과의 연결 유지
+                modified: true // 이 항목이 수정되었음을 표시
+            };
+            
+            console.log('수정 후 항목:', this.data.oneTimeExpenses[index]);
+            
+            // 원본 반복 데이터는 수정하지 않음 (개별 항목만 수정)
+            
+            // 로컬 스토리지에 확실히 저장
+            try {
+                this.saveData();
+                console.log('데이터 저장 완료. 로컬 스토리지에 저장된 데이터:', 
+                          JSON.parse(localStorage.getItem('expenseData')).oneTimeExpenses.length, '개 항목');
+                
+                // 저장된 데이터를 직접 확인
+                const savedData = JSON.parse(localStorage.getItem('expenseData'));
+                const savedItemIndex = savedData.oneTimeExpenses.findIndex(item => item.id === originalId);
+                
+                if (savedItemIndex !== -1) {
+                    console.log('저장된 항목 확인:', savedData.oneTimeExpenses[savedItemIndex]);
+                } else {
+                    console.error('저장된 데이터에서 수정한 항목을 찾을 수 없습니다.');
+                }
+            } catch (error) {
+                console.error('데이터 저장 중 오류 발생:', error);
+                // 에러 발생 시 다시 시도
+                setTimeout(() => this.saveData(), 100);
+            }
+            
+            return this.data.oneTimeExpenses[index];
+        }
+        
+        console.error('유효하지 않은 ID:', id);
+        throw new Error('유효하지 않은 ID입니다.');
+    },
+    
     // 반복 지출 수정
     updateRecurringExpense(id, frequency, day, amount, description, startDate, endDate, mainCategory, subCategory, skipWeekends, skipHolidays, isActualPayment = true) {
         // id로 항목 찾기 (반복 지출의 경우 id는 인덱스로 사용)
@@ -474,7 +710,7 @@ const DataManager = {
     },
     
     // 반복 지출 데이터 생성
-    generateRecurringExpenseData(recurringIndex) {
+    generateRecurringExpenseData(recurringIndex, modifiedRecurringItems = {}) {
         const recurringExpense = this.data.recurringExpenses[recurringIndex];
         if (!recurringExpense) return;
         
@@ -531,41 +767,34 @@ const DataManager = {
                 
                 const formattedDate = this.formatDate(dateToUse);
                 
-                // 생성된 항목
-                const generatedExpense = {
-                    date: formattedDate,
-                    amount: recurringExpense.amount,
-                    description: recurringExpense.description,
-                    mainCategory: recurringExpense.mainCategory,
-                    mainCategoryName: mainCategory?.name || '',
-                    subCategory: recurringExpense.subCategory,
-                    subCategoryName: subCategory?.name || '',
-                    isIncome: isIncome,
-                    isRecurring: true,
-                    frequency: 'daily',
-                    isActualPayment: recurringExpense.isActualPayment,
-                    recurringId: recurringId
-                };
+                // 이미 수정된 항목인지 확인
+                const modifiedItemKey = `${recurringId}-${formattedDate}`;
+                const isModified = modifiedRecurringItems && modifiedRecurringItems[modifiedItemKey];
                 
-                // 중복 항목이 없는 경우에만 추가
-                const isDuplicate = this.data.generatedExpenses.some(
+                // 일회성 지출에 추가 (중복 확인)
+                const isDuplicateInOneTime = this.data.oneTimeExpenses.some(
                     e => e.date === formattedDate && 
                          e.recurringId === recurringId
                 );
                 
-                if (!isDuplicate) {
-                    this.data.generatedExpenses.push(generatedExpense);
-                    
-                    // 일회성 지출에도 동일한 데이터 추가 (pregeneration)
-                    this.data.oneTimeExpenses.push({
-                        date: formattedDate,
-                        amount: recurringExpense.amount,
-                        description: `[반복] ${recurringExpense.description}`,
-                        mainCategory: recurringExpense.mainCategory,
-                        subCategory: recurringExpense.subCategory,
-                        isActualPayment: recurringExpense.isActualPayment,
-                        recurringId: recurringId // 추적을 위한 ID 추가
-                    });
+                if (!isDuplicateInOneTime) {
+                    if (isModified) {
+                        // 수정된 항목이 있으면 원본 데이터 사용
+                        this.data.oneTimeExpenses.push(modifiedRecurringItems[modifiedItemKey]);
+                        console.log(`수정된 반복 항목 유지: ${formattedDate}, ${modifiedRecurringItems[modifiedItemKey].description}`);
+                    } else {
+                        // 원본 반복 항목 데이터로 새로 생성
+                        this.data.oneTimeExpenses.push({
+                            id: this.getNextId(),  // 고유 ID 추가
+                            date: formattedDate,
+                            amount: recurringExpense.amount,
+                            description: `[반복] ${recurringExpense.description}`,
+                            mainCategory: recurringExpense.mainCategory,
+                            subCategory: recurringExpense.subCategory,
+                            isActualPayment: recurringExpense.isActualPayment,
+                            recurringId: recurringId // 추적을 위한 ID 추가
+                        });
+                    }
                 }
                 
                 // 다음 날짜로 이동
@@ -628,42 +857,38 @@ const DataManager = {
                 
                 const formattedDate = this.formatDate(dateToUse);
                 
-                // 생성된 항목
-                const generatedExpense = {
-                    date: formattedDate,
-                    amount: recurringExpense.amount,
-                    description: recurringExpense.description,
-                    mainCategory: recurringExpense.mainCategory,
-                    mainCategoryName: mainCategory?.name || '',
-                    subCategory: recurringExpense.subCategory,
-                    subCategoryName: subCategory?.name || '',
-                    isIncome: isIncome,
-                    isRecurring: true,
-                    frequency: 'monthly',
-                    isActualPayment: recurringExpense.isActualPayment,
-                    recurringId: recurringId
-                };
+                // 이미 수정된 항목인지 확인
+                const modifiedItemKey = `${recurringId}-${formattedDate}`;
+                const isModified = modifiedRecurringItems && modifiedRecurringItems[modifiedItemKey];
                 
-                // 중복 항목이 없는 경우에만 추가
-                const isDuplicate = this.data.generatedExpenses.some(
+                // 일회성 지출에 추가 (중복 확인)
+                const isDuplicateInOneTime = this.data.oneTimeExpenses.some(
                     e => e.date === formattedDate && 
                          e.recurringId === recurringId
                 );
                 
-                if (!isDuplicate) {
-                    this.data.generatedExpenses.push(generatedExpense);
-                    
-                    // 일회성 지출에도 동일한 데이터 추가 (pregeneration)
-                    this.data.oneTimeExpenses.push({
-                        date: formattedDate,
-                        amount: recurringExpense.amount,
-                        description: `[반복] ${recurringExpense.description}`,
-                        mainCategory: recurringExpense.mainCategory,
-                        subCategory: recurringExpense.subCategory,
-                        isActualPayment: recurringExpense.isActualPayment,
-                        recurringId: recurringId // 추적을 위한 ID 추가
-                    });
+                if (!isDuplicateInOneTime) {
+                    if (isModified) {
+                        // 수정된 항목이 있으면 원본 데이터 사용
+                        this.data.oneTimeExpenses.push(modifiedRecurringItems[modifiedItemKey]);
+                        console.log(`수정된 반복 항목 유지: ${formattedDate}, ${modifiedRecurringItems[modifiedItemKey].description}`);
+                    } else {
+                        // 원본 반복 항목 데이터로 새로 생성
+                        this.data.oneTimeExpenses.push({
+                            id: this.getNextId(),  // 고유 ID 추가
+                            date: formattedDate,
+                            amount: recurringExpense.amount,
+                            description: `[반복] ${recurringExpense.description}`,
+                            mainCategory: recurringExpense.mainCategory,
+                            subCategory: recurringExpense.subCategory,
+                            isActualPayment: recurringExpense.isActualPayment,
+                            recurringId: recurringId // 추적을 위한 ID 추가
+                        });
+                    }
                 }
+                
+                // 다음 월로 이동
+                currentDate.setMonth(currentDate.getMonth() + 1);
             }
         }
         
@@ -677,15 +902,29 @@ const DataManager = {
         // 기존 생성 데이터 삭제
         this.data.generatedExpenses = [];
         
-        // 모든 반복 지출이 생성한 일회성 데이터 삭제
+        // 기존에 수정된 반복 항목을 보존
+        const modifiedRecurringItems = {};
+        
+        // 수정된 반복 항목을 ID와 날짜로 식별하여 저장
+        this.data.oneTimeExpenses.forEach(expense => {
+            if (expense.recurringId) {
+                const key = `${expense.recurringId}-${expense.date}`;
+                modifiedRecurringItems[key] = expense;
+            }
+        });
+        
+        // 먼저 반복 지출로 생성된 항목만 필터링하여 제거
         this.data.oneTimeExpenses = this.data.oneTimeExpenses.filter(
             expense => !expense.recurringId
         );
         
         // 모든 반복 지출 항목에 대해 데이터 생성
         this.data.recurringExpenses.forEach((_, index) => {
-            this.generateRecurringExpenseData(index);
+            this.generateRecurringExpenseData(index, modifiedRecurringItems);
         });
+        
+        console.log('반복 지출 데이터 재생성 완료');
+        this.saveData();
     },
     
     // 날짜를 YYYY-MM-DD 형식으로 변환
@@ -832,5 +1071,12 @@ const DataManager = {
         this.data.holidays[year].splice(index, 1);
         this.saveData();
         return this.data.holidays[year];
+    },
+
+    // 새로운 고유 ID 생성
+    getNextId() {
+        const id = this.data.nextId++;
+        this.saveData();
+        return id;
     }
 }; 

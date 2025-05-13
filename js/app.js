@@ -10,6 +10,9 @@ const App = {
         // 데이터 로드
         DataManager.initialize();
         
+        // 기존 OneTimeExpenses에서 recurringId가 있는 항목 제거 (중복 데이터 정리)
+        DataManager.cleanupDuplicateRecurringItems();
+        
         // 각 모듈 초기화
         this.initializeModules();
         
