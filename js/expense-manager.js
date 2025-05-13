@@ -171,7 +171,7 @@ const ExpenseManager = {
         let filterHtml = `
             <div class="filter-container mb-3">
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-8">
                         <div class="input-group">
                             <span class="input-group-text">날짜 범위</span>
                             <input type="date" id="one-time-date-filter-start" class="form-control" value="${defaultDate}">
@@ -368,10 +368,113 @@ const ExpenseManager = {
         
         if (confirmDelete) {
             DataManager.removeOneTimeExpense(index);
-            this.renderOneTimeExpenses();
+            
+            // 전체 렌더링 대신 해당 행만 삭제
+            const tableBody = document.getElementById('one-time-expense-body');
+            if (tableBody) {
+                const row = tableBody.querySelector(`button.delete-one-time-expense[data-index="${index}"]`)?.closest('tr');
+                if (row) {
+                    row.remove();
+                    
+                    // 표시할 항목이 없으면 빈 메시지 표시
+                    if (tableBody.childElementCount === 0) {
+                        tableBody.innerHTML = `<tr><td colspan="5" class="text-center">해당 기간에 데이터가 없습니다.</td></tr>`;
+                    }
+                }
+            }
             
             // 달력 업데이트를 위한 이벤트 발생
             document.dispatchEvent(new CustomEvent('expenses-updated'));
+        }
+    },
+    
+    // 항목 특정 행만 업데이트
+    updateOneTimeExpenseRow(expense, originalIndex) {
+        const tableBody = document.getElementById('one-time-expense-body');
+        if (!tableBody) return;
+        
+        // 해당 행 찾기
+        const row = tableBody.querySelector(`button.delete-one-time-expense[data-index="${originalIndex}"]`)?.closest('tr');
+        if (!row) return;
+        
+        // 대분류 이름 찾기
+        const mainCategory = DataManager.data.categories.main.find(c => c.code === expense.mainCategory);
+        const mainCategoryName = mainCategory ? mainCategory.name : '미분류';
+        
+        // 중분류 이름 찾기
+        const subCategory = DataManager.data.categories.sub.find(c => c.code === expense.subCategory);
+        const subCategoryName = subCategory ? subCategory.name : '';
+        
+        // 수입/지출 구분
+        const isIncome = mainCategory?.type === 'income';
+        const amountClass = isIncome ? 'text-primary' : 'text-danger';
+        const amountPrefix = isIncome ? '+' : '-';
+        
+        // 실입금 상태 표시
+        const actualPaymentBadge = expense.isActualPayment ? 
+            '<span class="badge bg-success">✓</span>' : 
+            '<span class="badge bg-secondary">✗</span>';
+        
+        // 행 내용 업데이트
+        row.innerHTML = `
+            <td>${expense.date}</td>
+            <td class="${amountClass}" style="text-align: right;">${amountPrefix}${Utils.number.formatCurrency(expense.amount)}</td>
+            <td>${expense.description}</td>
+            <td>${mainCategoryName}${subCategoryName ? ` > ${subCategoryName}` : ''} ${actualPaymentBadge}</td>
+            <td style="text-align: center;">
+                <button class="btn btn-sm btn-outline-primary edit-one-time-expense me-1" data-index="${originalIndex}">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger delete-one-time-expense" data-index="${originalIndex}">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        // 이벤트 리스너 다시 연결
+        this.attachRowEventListeners(row);
+    },
+    
+    // 실입금 상태 토글
+    toggleActualPayment(id) {
+        try {
+            // 데이터 매니저에서 실입금 상태 토글 후 업데이트된 항목 가져오기
+            const updatedExpense = DataManager.toggleActualPayment(id);
+            
+            // 인덱스 찾기
+            const index = DataManager.findOneTimeExpenseIndexById(id);
+            
+            // 해당 항목만 UI 업데이트
+            if (index !== -1) {
+                this.updateOneTimeExpenseRow(updatedExpense, index);
+            }
+            
+            // 성공 시 업데이트된 항목 반환
+            return updatedExpense;
+        } catch (error) {
+            console.error('실입금 상태 변경 중 오류 발생:', error);
+            throw error;
+        }
+    },
+    
+    // 행 이벤트 리스너 연결
+    attachRowEventListeners(row) {
+        // 수정 버튼 이벤트 리스너
+        const editButton = row.querySelector('.edit-one-time-expense');
+        if (editButton) {
+            editButton.addEventListener('click', (e) => {
+                const index = parseInt(e.target.closest('button').dataset.index);
+                console.log('수정', index);
+            });
+        }
+        
+        // 삭제 버튼 이벤트 리스너
+        const deleteButton = row.querySelector('.delete-one-time-expense');
+        if (deleteButton) {
+            deleteButton.addEventListener('click', (e) => {
+                const index = parseInt(e.target.closest('button').dataset.index);
+                this.deleteOneTimeExpense(index);
+            });
         }
     },
     
@@ -418,7 +521,10 @@ const ExpenseManager = {
                     (frequency === 'daily' || (frequency === 'monthly' && day))
                 ) {
                     try {
-                        DataManager.addRecurringExpense(frequency, day, amount, description, startDate, endDate, mainCategory, subCategory, skipWeekends, skipHolidays, isActualPayment);
+                        // 금액을 문자열에서 숫자로 변환 (콤마 제거)
+                        const numericAmount = parseFloat(amount.replace(/,/g, ''));
+                        
+                        DataManager.addRecurringExpense(frequency, day, numericAmount, description, startDate, endDate, mainCategory, subCategory, skipWeekends, skipHolidays, isActualPayment);
                         
                         // 입력 필드 초기화
                         document.getElementById('recurring-day').value = '';
@@ -449,15 +555,23 @@ const ExpenseManager = {
                 e.preventDefault();
                 
                 const date = document.getElementById('one-time-date').value;
-                const amount = document.getElementById('one-time-amount').value;
+                const amountInput = document.getElementById('one-time-amount').value;
                 const description = document.getElementById('one-time-description').value;
                 const mainCategory = document.getElementById('one-time-main-category').value;
                 const subCategory = document.getElementById('one-time-sub-category').value;
                 const isActualPayment = document.getElementById('one-time-actual-payment').checked;
+                const vendor = document.getElementById('one-time-vendor').value || '';
                 
-                if (date && amount && description && mainCategory) {
+                if (date && amountInput && description && mainCategory) {
                     try {
-                        DataManager.addOneTimeExpense(date, amount, description, mainCategory, subCategory, isActualPayment);
+                        // 금액을 문자열에서 숫자로 변환 (콤마 제거)
+                        const amount = parseFloat(amountInput.replace(/,/g, ''));
+                        
+                        if (isNaN(amount)) {
+                            throw new Error('올바른 금액을 입력해주세요.');
+                        }
+                        
+                        DataManager.addOneTimeExpense(date, amount, description, mainCategory, subCategory, isActualPayment, vendor);
                         
                         // 입력 필드 초기화
                         document.getElementById('one-time-amount').value = '';

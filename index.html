@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>연간 지출 관리 앱</title>
+    <title>자금수지</title>
     <!-- 테마 초기화를 위한 인라인 스크립트 -->
     <script>
         // 페이지 로드 전 테마 적용하여 깜빡임 방지
@@ -16,52 +16,54 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
         :root {
-            --primary-color: #e3b9d6;
-            --primary-dark: #b792ad;
-            --primary-light: #f2e1ec;
-            --accent-color: #9a7592;
-            --dark-color: #4a4a4a;
-            --light-color: #fef4fa;
-            --border-color: #e8d7e2;
-            --text-color: #555555;
-            --text-muted: #888888;
+            --primary-color: #e78fb3;
+            --primary-dark: #d07396;
+            --primary-light: #fae6ef;
+            --accent-color: #d07396;
+            --dark-color: #4a5568;
+            --light-color: #f9edf3;
+            --border-color: #f1d6e3;
+            --text-color: #4a5568;
+            --text-muted: #718096;
+            --positive-color: #333333; /* 플러스(양수) 금액 색상 - 검정색 계통 */
+            --negative-color: #e57373; /* 마이너스(음수) 금액 색상 */
         }
         
         /* 테마 색상 변수 정의 */
         [data-theme="blue"] {
-            --primary-color: #90caf9;
-            --primary-dark: #64b5f6;
-            --primary-light: #e3f2fd;
-            --accent-color: #42a5f5;
-            --light-color: #e3f2fd;
-            --border-color: #bbdefb;
+            --primary-color: #81a4cd;
+            --primary-dark: #6389b8;
+            --primary-light: #e6f0fa;
+            --accent-color: #5a89bc;
+            --light-color: #edf5fd;
+            --border-color: #c6d9ee;
         }
 
         [data-theme="green"] {
-            --primary-color: #a5d6a7;
-            --primary-dark: #81c784;
-            --primary-light: #e8f5e9;
-            --accent-color: #66bb6a;
-            --light-color: #e8f5e9;
-            --border-color: #c8e6c9;
+            --primary-color: #7eb594;
+            --primary-dark: #6aa17e;
+            --primary-light: #e7f4ee;
+            --accent-color: #5e9977;
+            --light-color: #eef7f3;
+            --border-color: #c5e1d3;
         }
 
         [data-theme="orange"] {
-            --primary-color: #ffcc80;
-            --primary-dark: #ffb74d;
-            --primary-light: #fff8e1;
-            --accent-color: #ffa726;
-            --light-color: #fff8e1;
-            --border-color: #ffe0b2;
+            --primary-color: #e0b982;
+            --primary-dark: #d1a86b;
+            --primary-light: #faf3e8;
+            --accent-color: #c99c5b;
+            --light-color: #fdf7ee;
+            --border-color: #f0dec2;
         }
 
         [data-theme="purple"] {
-            --primary-color: #b39ddb;
-            --primary-dark: #9575cd;
-            --primary-light: #ede7f6;
-            --accent-color: #7e57c2;
-            --light-color: #ede7f6;
-            --border-color: #d1c4e9;
+            --primary-color: #a393c0;
+            --primary-dark: #8d7aad;
+            --primary-light: #f0ebf7;
+            --accent-color: #7d67a3;
+            --light-color: #f5f1fa;
+            --border-color: #dcd1ec;
         }
         
         body {
@@ -421,11 +423,22 @@
         
         /* 부트스트랩 색상 재정의 */
         .text-primary {
-            color: var(--accent-color) !important;
+            color: var(--positive-color) !important;
         }
         
         .text-danger {
-            color: #e57373 !important;
+            color: var(--negative-color) !important;
+        }
+        
+        /* 금액 표시 관련 색상 */
+        .finance-positive {
+            color: var(--positive-color) !important;
+            font-weight: 600;
+        }
+        
+        .finance-negative {
+            color: var(--negative-color) !important;
+            font-weight: 600;
         }
         
         /* 모달 스타일 */
@@ -948,17 +961,6 @@
             border-right: 2px solid #dee2e6;
         }
         
-        /* 음수/양수 금액 색상 */
-        .finance-positive {
-            color: var(--accent-color);
-            font-weight: 600;
-        }
-        
-        .finance-negative {
-            color: #e57373;
-            font-weight: 600;
-        }
-        
         /* 테마 선택 버튼 스타일 */
         .theme-btn {
             cursor: pointer;
@@ -1060,7 +1062,7 @@
 <body>
     <div class="app-container">
         <div class="app-header">
-            <h1><i class="bi bi-calendar-check"></i> 연간 지출 관리 앱</h1>
+            <h1><i class="bi bi-calendar-check"></i> 자금수지</h1>
             <div class="summary-pills">
                 <div class="summary-pill">
                     <i class="bi bi-cash-stack" style="color: #c06c6c;"></i>
@@ -1264,12 +1266,16 @@
                                     <input type="date" id="one-time-date" class="form-control">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="one-time-amount" class="form-label">금액:</label>
-                                    <input type="number" id="one-time-amount" class="form-control" placeholder="금액">
+                                    <label for="one-time-vendor" class="form-label">거래처:</label>
+                                    <input type="text" id="one-time-vendor" class="form-control" placeholder="거래처명">
                                 </div>
                                 <div class="mb-3">
                                     <label for="one-time-description" class="form-label">내용:</label>
                                     <input type="text" id="one-time-description" class="form-control" placeholder="지출 내용">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="one-time-amount" class="form-label">금액:</label>
+                                    <input type="number" id="one-time-amount" class="form-control" placeholder="금액">
                                 </div>
                                 <div class="mb-3">
                                     <label for="one-time-main-category" class="form-label">대분류:</label>
@@ -1433,7 +1439,7 @@
                                     <p>테마 색상 선택</p>
                                     <div class="theme-options mb-3">
                                         <div class="d-flex flex-wrap gap-2">
-                                            <button class="theme-btn" data-theme="default" style="background-color: #e3b9d6; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #e3b9d6;"></button>
+                                            <button class="theme-btn" data-theme="default" style="background-color: #e78fb3; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #e78fb3;"></button>
                                             <button class="theme-btn" data-theme="blue" style="background-color: #90caf9; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #90caf9;"></button>
                                             <button class="theme-btn" data-theme="green" style="background-color: #a5d6a7; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #a5d6a7;"></button>
                                             <button class="theme-btn" data-theme="orange" style="background-color: #ffcc80; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #ffcc80;"></button>
@@ -1461,7 +1467,7 @@
                 </span>
             </p>
             <p class="text-muted small">
-                <i class="bi bi-c-circle"></i> 2024 연간 지출 관리 앱
+                <i class="bi bi-c-circle"></i> 자금수지APP
             </p>
         </div>
     </footer>

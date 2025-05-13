@@ -21,10 +21,14 @@ const CategoryManager = {
             return;
         }
         
+        // 순서대로 정렬
+        const sortedCategories = [...DataManager.data.categories.main].sort((a, b) => a.order - b.order);
+        
         let html = `
             <table class="table table-striped">
                 <thead>
                     <tr>
+                        <th>순서</th>
                         <th>코드</th>
                         <th>분류명</th>
                         <th>유형</th>
@@ -34,16 +38,35 @@ const CategoryManager = {
                 <tbody>
         `;
         
-        DataManager.data.categories.main.forEach((category, index) => {
+        sortedCategories.forEach((category, index) => {
             const typeLabel = category.type === 'income' ? '수입' : '지출';
             const typeClass = category.type === 'income' ? 'text-primary' : 'text-danger';
             
+            // 실제 인덱스 (정렬되지 않은 원본 배열에서의 위치)
+            const originalIndex = DataManager.data.categories.main.findIndex(c => c.code === category.code);
+            
             html += `
                 <tr>
+                    <td>${category.order}</td>
                     <td>${category.code}</td>
                     <td>${category.name}</td>
                     <td><span class="${typeClass}">${typeLabel}</span></td>
-                    <td><button class="btn btn-sm btn-danger delete-main-category" data-index="${index}">삭제</button></td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary edit-main-category" data-index="${originalIndex}" title="이름 변경">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary move-up" data-index="${originalIndex}" ${index === 0 ? 'disabled' : ''}>
+                                <i class="bi bi-arrow-up"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary move-down" data-index="${originalIndex}" ${index === sortedCategories.length - 1 ? 'disabled' : ''}>
+                                <i class="bi bi-arrow-down"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-main-category" data-index="${originalIndex}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
                 </tr>
             `;
         });
@@ -55,12 +78,39 @@ const CategoryManager = {
         
         mainCategoryList.innerHTML = html;
         
+        // 수정 버튼 이벤트 리스너 추가
+        const editButtons = mainCategoryList.querySelectorAll('.edit-main-category');
+        editButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const index = parseInt(e.target.closest('.edit-main-category').dataset.index);
+                this.showEditMainCategoryDialog(index);
+            });
+        });
+        
         // 삭제 버튼 이벤트 리스너 추가
         const deleteButtons = mainCategoryList.querySelectorAll('.delete-main-category');
         deleteButtons.forEach(button => {
             button.addEventListener('click', (e) => {
-                const index = parseInt(e.target.dataset.index);
+                const index = parseInt(e.target.closest('.delete-main-category').dataset.index);
                 this.deleteMainCategory(index);
+            });
+        });
+        
+        // 위로 이동 버튼 이벤트 리스너 추가
+        const moveUpButtons = mainCategoryList.querySelectorAll('.move-up');
+        moveUpButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const index = parseInt(e.target.closest('.move-up').dataset.index);
+                this.moveMainCategoryUp(index);
+            });
+        });
+        
+        // 아래로 이동 버튼 이벤트 리스너 추가
+        const moveDownButtons = mainCategoryList.querySelectorAll('.move-down');
+        moveDownButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const index = parseInt(e.target.closest('.move-down').dataset.index);
+                this.moveMainCategoryDown(index);
             });
         });
     },
@@ -98,7 +148,16 @@ const CategoryManager = {
                     <td>${mainCategoryName} (${category.mainCode})</td>
                     <td>${category.code}</td>
                     <td>${category.name}</td>
-                    <td><button class="btn btn-sm btn-danger delete-sub-category" data-index="${index}">삭제</button></td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary edit-sub-category" data-index="${index}" title="이름 변경">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-sub-category" data-index="${index}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
                 </tr>
             `;
         });
@@ -109,6 +168,15 @@ const CategoryManager = {
         `;
         
         subCategoryList.innerHTML = html;
+        
+        // 수정 버튼 이벤트 리스너 추가
+        const editButtons = subCategoryList.querySelectorAll('.edit-sub-category');
+        editButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                this.showEditSubCategoryDialog(index);
+            });
+        });
         
         // 삭제 버튼 이벤트 리스너 추가
         const deleteButtons = subCategoryList.querySelectorAll('.delete-sub-category');
@@ -308,5 +376,108 @@ const CategoryManager = {
             option.textContent = `${category.name} (${category.code})`;
             selector.appendChild(option);
         });
+    },
+    
+    // 대분류 순서 위로 이동
+    moveMainCategoryUp(index) {
+        const categories = DataManager.data.categories.main;
+        const currentCategory = categories[index];
+        
+        // 현재 순서보다 작은 순서를 가진 카테고리 중 가장 큰 순서 찾기
+        const prevCategory = categories
+            .filter(c => c.order < currentCategory.order)
+            .sort((a, b) => b.order - a.order)[0];
+        
+        if (prevCategory) {
+            // 순서 교환
+            const tempOrder = currentCategory.order;
+            currentCategory.order = prevCategory.order;
+            prevCategory.order = tempOrder;
+            
+            // 데이터 저장
+            DataManager.saveData();
+            
+            // 목록 갱신
+            this.renderMainCategories();
+        }
+    },
+    
+    // 대분류 순서 아래로 이동
+    moveMainCategoryDown(index) {
+        const categories = DataManager.data.categories.main;
+        const currentCategory = categories[index];
+        
+        // 현재 순서보다 큰 순서를 가진 카테고리 중 가장 작은 순서 찾기
+        const nextCategory = categories
+            .filter(c => c.order > currentCategory.order)
+            .sort((a, b) => a.order - b.order)[0];
+        
+        if (nextCategory) {
+            // 순서 교환
+            const tempOrder = currentCategory.order;
+            currentCategory.order = nextCategory.order;
+            nextCategory.order = tempOrder;
+            
+            // 데이터 저장
+            DataManager.saveData();
+            
+            // 목록 갱신
+            this.renderMainCategories();
+        }
+    },
+    
+    // 대분류 이름 변경 다이얼로그 표시
+    showEditMainCategoryDialog(index) {
+        const category = DataManager.data.categories.main[index];
+        if (!category) return;
+        
+        const newName = prompt(`대분류 '${category.name}' (${category.code})의 새 이름을 입력하세요:`, category.name);
+        
+        if (newName !== null && newName.trim() !== '') {
+            try {
+                DataManager.updateMainCategoryName(index, newName);
+                
+                // 성공 메시지
+                alert(`대분류명이 '${newName}'으로 변경되었습니다.`);
+                
+                // 화면 갱신
+                this.renderMainCategories();
+                this.renderSubCategories(); // 연결된 중분류 표시도 갱신
+                
+                // 대분류 선택 옵션 업데이트
+                this.updateMainCategorySelectors();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+    },
+    
+    // 중분류 이름 변경 다이얼로그 표시
+    showEditSubCategoryDialog(index) {
+        const category = DataManager.data.categories.sub[index];
+        if (!category) return;
+        
+        // 연결된 대분류 찾기
+        const mainCategory = DataManager.data.categories.main.find(c => c.code === category.mainCode);
+        const mainCategoryName = mainCategory ? mainCategory.name : '(삭제됨)';
+        
+        const newName = prompt(`중분류 '${category.name}' (${category.code}, 대분류: ${mainCategoryName})의 새 이름을 입력하세요:`, category.name);
+        
+        if (newName !== null && newName.trim() !== '') {
+            try {
+                DataManager.updateSubCategoryName(index, newName);
+                
+                // 성공 메시지
+                alert(`중분류명이 '${newName}'으로 변경되었습니다.`);
+                
+                // 화면 갱신
+                this.renderSubCategories();
+                
+                // 중분류 선택 옵션 업데이트
+                this.updateSubCategorySelectors();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
     }
 }; 

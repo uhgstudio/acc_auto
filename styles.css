@@ -4,11 +4,28 @@
     padding: 0;
 }
 
+:root {
+    --primary-color: #e78fb3;
+    --primary-dark: #d07396;
+    --primary-light: #fae6ef;
+    --secondary-color: #e9a3bf;
+    --text-color: #4a5568;
+    --border-color: #f1d6e3;
+    --background-color: #fdf2f7;
+    --card-bg: #ffffff;
+    --income-color: #333333;
+    --expense-color: #9e7a7a;
+    --highlight-color: #faeef5;
+    --hover-color: #fae0eb;
+    --positive-color: #333333;
+    --negative-color: #e57373;
+}
+
 body {
     font-family: 'Noto Sans KR', sans-serif;
     line-height: 1.6;
-    background-color: #f5f5f5;
-    color: #333;
+    background-color: var(--background-color);
+    color: var(--text-color);
 }
 
 .container {
@@ -19,22 +36,22 @@ body {
 
 h1, h2 {
     margin-bottom: 20px;
-    color: #333;
+    color: var(--text-color);
 }
 
 h1 {
     text-align: center;
     padding-bottom: 15px;
     margin-bottom: 20px;
-    border-bottom: 2px solid #ddd;
+    border-bottom: 2px solid var(--border-color);
 }
 
 .setup-section, .recurring-expenses, .one-time-section, .calendar-view, .summary-section {
-    background-color: #fff;
+    background-color: var(--card-bg);
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 30px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .input-group {
@@ -51,13 +68,13 @@ h1 {
 input[type="number"], input[type="text"], input[type="date"] {
     flex: 1;
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     font-size: 16px;
 }
 
 button {
-    background-color: #4CAF50;
+    background-color: var(--primary-color);
     color: white;
     border: none;
     padding: 10px 15px;
@@ -68,7 +85,7 @@ button {
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: var(--primary-dark);
 }
 
 #recurring-list {
@@ -115,42 +132,62 @@ button:hover {
     gap: 20px;
 }
 
-.month {
-    background-color: #f9f9f9;
+.month-card {
+    background-color: var(--card-bg);
     border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    margin-bottom: 15px;
+    transition: transform 0.2s;
+}
+
+.month-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.month-header {
+    background-color: var(--primary-light);
+    color: var(--text-color);
+    padding: 12px 15px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.month-body {
     padding: 15px;
-    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
 }
 
-.month-title {
-    text-align: center;
-    margin-bottom: 10px;
-    font-weight: bold;
-    color: #333;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 5px;
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
 }
 
-.expense-day {
-    margin: 5px 0;
+.summary-table th,
+.summary-table td {
     padding: 8px;
-    background-color: #e9f7ef;
-    border-radius: 4px;
-    font-size: 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
 }
 
-.expense-day.holiday {
-    background-color: #f8d7da;
-}
-
-.expense-day.weekend {
-    background-color: #fff3cd;
-}
-
-.total, .monthly-average {
-    font-size: 18px;
-    margin: 10px 0;
+.summary-table th {
+    background-color: var(--highlight-color);
     font-weight: bold;
+}
+
+.no-expense-msg {
+    text-align: center;
+    color: #888;
+    font-style: italic;
+    padding: 15px 0;
+}
+
+.detail-btn {
+    width: 100%;
+    margin-top: 10px;
 }
 
 @media (max-width: 768px) {
@@ -169,7 +206,7 @@ button:hover {
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
     #expense-calendar {
         grid-template-columns: 1fr;
     }
@@ -480,45 +517,87 @@ button:hover {
 /* 상세 내역 테이블 셀 사이즈 조정 */
 #expense-detail-list th, 
 #expense-detail-list td {
-    padding: 12px 15px;
+    padding: 8px 10px;
     vertical-align: middle;
-    white-space: nowrap;
+    white-space: normal;
+    font-size: 14px;
 }
 
 /* 상세 내역 테이블 열 너비 조정 */
 #expense-detail-list th:nth-child(1),
 #expense-detail-list td:nth-child(1) {
-    min-width: 130px; /* 날짜 */
+    min-width: 90px; /* 날짜 */
+    max-width: 100px;
 }
 
 #expense-detail-list th:nth-child(2),
 #expense-detail-list td:nth-child(2) {
-    min-width: 300px; /* 내용 */
-    max-width: 400px;
+    min-width: 90px; /* 거래처 */
+    max-width: 120px;
 }
 
 #expense-detail-list th:nth-child(3),
 #expense-detail-list td:nth-child(3) {
-    min-width: 350px; /* 분류 */
-    max-width: 450px;
+    min-width: 120px; /* 내용 */
+    max-width: 250px;
+    white-space: normal;
+    word-break: break-word;
 }
 
 #expense-detail-list th:nth-child(4),
 #expense-detail-list td:nth-child(4) {
-    min-width: 150px; /* 금액 */
-    text-align: right;
+    min-width: 100px; /* 분류 */
+    max-width: 150px;
+    white-space: normal;
+    word-break: break-word;
 }
 
 #expense-detail-list th:nth-child(5),
 #expense-detail-list td:nth-child(5) {
-    min-width: 150px; /* 잔액 */
+    min-width: 90px; /* 금액 */
+    max-width: 110px;
     text-align: right;
 }
 
-/* 테이블 스크롤 영역 */
+#expense-detail-list th:nth-child(6),
+#expense-detail-list td:nth-child(6) {
+    min-width: 90px; /* 잔액 */
+    max-width: 110px;
+    text-align: right;
+}
+
+#expense-detail-list th:nth-child(7),
+#expense-detail-list td:nth-child(7) {
+    min-width: 40px; /* 실입금 */
+    max-width: 50px;
+    text-align: center;
+}
+
+#expense-detail-list th:nth-child(8),
+#expense-detail-list td:nth-child(8) {
+    min-width: 80px; /* 액션 */
+    max-width: 90px;
+    text-align: center;
+}
+
+/* 내용과 분류가 길어도 줄바꿈되도록 설정 */
+#expense-detail-list .expense-description,
+#expense-detail-list .expense-category {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* 테이블 스크롤 영역 - 세로 스크롤만 활성화 */
 .table-responsive {
-    overflow-x: auto;
+    overflow-y: auto;
+    overflow-x: visible;
     max-height: calc(80vh - 120px);
+}
+
+/* 금액 필드 폰트 크기 조정 */
+.expense-amount, .expense-balance {
+    font-size: 13px;
 }
 
 /* 팝업 컨텐츠 최대 너비 확장 */
@@ -593,9 +672,10 @@ button:hover {
 }
 
 .popup-header {
-    background-color: #f5f5f5;
+    background-color: var(--primary-light);
+    color: var(--text-color);
     padding: 15px 20px;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -609,7 +689,7 @@ button:hover {
 .close-popup-btn {
     background: none;
     border: none;
-    color: #666;
+    color: var(--text-color);
     font-size: 24px;
     cursor: pointer;
     padding: 0;
@@ -623,8 +703,8 @@ button:hover {
 }
 
 .close-popup-btn:hover {
-    background-color: #eee;
-    color: #333;
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--text-color);
 }
 
 .popup-body {
@@ -757,4 +837,369 @@ button:hover {
 .small.text-muted {
     font-size: 0.75rem;
     color: #6c757d !important;
+}
+
+/* 자금수지 스타일 */
+.finance-row-total {
+    font-weight: bold;
+    background-color: #f8f9fa;
+}
+
+.finance-row-main {
+    font-weight: bold;
+}
+
+.finance-row-subtotal {
+    background-color: #f9f9f9;
+}
+
+.finance-row-sub {
+    margin-left: 15px;
+    color: #666;
+}
+
+.finance-positive {
+    color: #28a745;
+}
+
+.finance-negative {
+    color: #dc3545;
+}
+
+.finance-first-col {
+    position: sticky;
+    left: 0;
+    background-color: inherit;
+    z-index: 2;
+    box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
+}
+
+.finance-second-col {
+    position: sticky;
+    left: 200px;
+    background-color: inherit;
+    z-index: 2;
+    box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
+}
+
+/* 클릭 가능한 자금수지 셀 스타일 */
+.clickable-amount {
+    cursor: pointer;
+    position: relative;
+}
+
+.clickable-amount:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.finance-clickable:after {
+    content: '👁️';
+    font-size: 10px;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    opacity: 0.5;
+}
+
+.text-primary {
+    color: var(--income-color) !important;
+}
+
+.text-danger {
+    color: var(--expense-color) !important;
+}
+
+/* 테이블 헤더 색상 조정 */
+#expense-detail-list thead th {
+    background-color: var(--primary-light);
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+/* 테이블 행 호버 효과 */
+#expense-detail-list tbody tr:hover {
+    background-color: var(--hover-color);
+}
+
+/* 테이블 내 버튼 스타일 */
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-outline-danger {
+    color: var(--expense-color);
+    border-color: var(--expense-color);
+}
+
+.btn-outline-danger:hover {
+    background-color: var(--expense-color);
+    color: white;
+}
+
+/* 뱃지 색상 조정 */
+.badge.bg-success {
+    background-color: var(--income-color) !important;
+}
+
+.badge.bg-secondary {
+    background-color: #a0aec0 !important;
+}
+
+/* 테이블 순서 강조 행 */
+.table-light {
+    background-color: var(--highlight-color) !important;
+}
+
+.table-primary {
+    background-color: var(--primary-light) !important;
+    color: var(--text-color);
+}
+
+/* 네비게이션 탭 스타일 업데이트 */
+.nav-tabs .nav-link {
+    color: var(--text-color);
+    border: none;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: transparent;
+    border-bottom: 2px solid var(--secondary-color);
+}
+
+/* 폼 버튼 스타일 */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.btn-success {
+    background-color: var(--income-color);
+    border-color: var(--income-color);
+}
+
+.btn-success:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.btn-danger {
+    background-color: var(--expense-color);
+    border-color: var(--expense-color);
+}
+
+.btn-outline-secondary {
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--highlight-color);
+    color: var(--text-color);
+}
+
+/* 폼 입력 필드 포커스 시 강조 색상 */
+.form-control:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.25rem rgba(108, 155, 150, 0.25);
+}
+
+.current-month {
+    border: 2px solid var(--primary-color);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+}
+
+.current-month .month-header {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.current-month .month-header span.text-primary,
+.current-month .month-header span.text-danger {
+    color: white !important;
+}
+
+/* 팝업 배경 */
+.popup-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-content {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    margin: 20px;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+}
+
+.popup-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* 테이블 내용 폰트 크기 축소 및 가독성 개선 */
+#expense-detail-list {
+    font-size: 0.7rem;
+}
+
+#expense-detail-list th {
+    padding: 3px 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+#expense-detail-list td {
+    padding: 2px 4px;
+    vertical-align: middle;
+    font-size: 0.7rem;
+}
+
+/* 테이블 행 간격 줄이기 */
+#expense-detail-list tr {
+    line-height: 1;
+}
+
+/* 내용과 분류가 길어도 줄바꿈되도록 설정 */
+#expense-detail-list .expense-description,
+#expense-detail-list .expense-category,
+#expense-detail-list .expense-vendor {
+    white-space: normal;
+    word-break: break-word;
+    max-width: 180px;
+}
+
+/* 테이블 스크롤 영역 - 컨텐츠에 맞게 높이 조정 */
+.table-responsive {
+    overflow-y: auto;
+    overflow-x: visible;
+    max-height: calc(100vh - 200px);
+}
+
+/* 금액 및 잔액 필드 폰트 크기 조정 */
+.expense-amount, .expense-balance {
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+/* 테이블 섹션 타이틀 사이즈 조정 */
+.popup-body h4 {
+    font-size: 0.9rem;
+    margin-top: 0.7rem;
+}
+
+/* 작은 배지 스타일 */
+.badge {
+    font-size: 0.65rem !important;
+    padding: 0.2em 0.4em !important;
+}
+
+.actual-payment-badge {
+    font-size: 0.65rem !important;
+    padding: 0.1em 0.3em !important;
+}
+
+/* 요약 테이블 폰트 크기 조정 */
+.summary-table, 
+#main-category-summary, 
+#sub-category-summary {
+    font-size: 0.7rem;
+}
+
+#main-category-summary th,
+#main-category-summary td,
+#sub-category-summary th,
+#sub-category-summary td {
+    padding: 3px 4px;
+    font-size: 0.7rem;
+}
+
+/* 액션 버튼 크기 조정 */
+.btn-group-sm>.btn, .btn-sm {
+    padding: 0.1rem 0.25rem;
+    font-size: 0.65rem;
+}
+
+.bi {
+    font-size: 0.65rem;
+}
+
+/* 필터 영역 폰트 크기 조정 */
+.input-group-text, .form-control {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
+}
+
+/* 버튼 크기 조정 */
+.btn {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* 팝업 헤더 크기 조정 */
+.popup-header h3 {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* 팝업 body 패딩 축소 */
+.popup-body {
+    padding: 10px;
+}
+
+/* 탭 내비게이션 크기 조정 */
+.nav-tabs .nav-link {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+}
+
+/* 날짜 검색 폼 너비 확장 */
+#date-filter-start, #date-filter-end {
+    min-width: 150px;
+}
+
+/* 포커스 시 테두리 색상 변경 */
+.form-control:focus, .form-select:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.2rem rgba(108, 155, 150, 0.25);
+}
+
+/* 버튼 스타일 개선 */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
 } 

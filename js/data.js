@@ -123,6 +123,14 @@ const DataManager = {
             }
         });
         
+        // 대분류에 order 필드가 없으면 추가
+        let nextOrder = 1;
+        this.data.categories.main.forEach(category => {
+            if (!category.hasOwnProperty('order')) {
+                category.order = nextOrder++;
+            }
+        });
+        
         // frequency 필드가 없는 기존 반복 지출 항목에 'monthly' 값 추가
         this.data.recurringExpenses.forEach(expense => {
             if (!expense.hasOwnProperty('frequency')) {
@@ -161,6 +169,11 @@ const DataManager = {
         this.data.oneTimeExpenses.forEach(expense => {
             if (!expense.hasOwnProperty('isActualPayment')) {
                 expense.isActualPayment = true;
+            }
+            
+            // 거래처(vendor) 필드 추가
+            if (!expense.hasOwnProperty('vendor')) {
+                expense.vendor = '';
             }
         });
         
@@ -211,21 +224,18 @@ const DataManager = {
         this.data.categories = {
             main: [
                 // 수입 관련 대분류
-                { code: 'INCOME', name: '수입', type: 'income' },
-                { code: 'CARD_SALES', name: '카드 매출', type: 'income' },
-                { code: 'CASH_DEPOSIT', name: '현금입금', type: 'income' },
-                { code: 'OTHER_INCOME', name: '기타입금', type: 'income' },
+                { code: 'CARD_SALES', name: '카드 매출', type: 'income', order: 1 },
+                { code: 'CASH_DEPOSIT', name: '현금입금', type: 'income', order: 2 },
+                { code: 'SERVICE_INCOME', name: '용역수입', type: 'income', order: 3 },
+                { code: 'OTHER_INCOME', name: '기타입금', type: 'income', order: 4 },
                 
                 // 지출 관련 대분류
-                { code: 'EXPENSE', name: '지출', type: 'expense' },
-                { code: 'LABOR', name: '인건비', type: 'expense' },
-                { code: 'ADMIN', name: '관리비', type: 'expense' },
-                { code: 'TAX', name: '세금', type: 'expense' },
-                { code: 'FINANCE', name: '금융지출', type: 'expense' },
-                { code: 'FIXED_CHARGE', name: '공과금', type: 'expense' },
-                { code: 'MEMBERSHIP', name: '멤버쉽카드', type: 'expense' },
-                { code: 'RETAIL', name: '판매관리비', type: 'expense' },
-                { code: 'INVESTMENT', name: '기타출금', type: 'expense' }
+                { code: 'LABOR', name: '인건비', type: 'expense', order: 5 },
+                { code: 'UTILITY', name: '용역비용', type: 'expense', order: 6 },
+                { code: 'OTHER_EXPENSE', name: '기타지출', type: 'expense', order: 7 },
+                { code: 'TAX', name: '세금', type: 'expense', order: 8 },
+                { code: 'RESTAURANT', name: '원자재 외', type: 'expense', order: 9 },
+                { code: 'RETAIL', name: '판매관리비', type: 'expense', order: 10 },
             ],
             sub: [
                 // 카드 매출 중분류
@@ -237,58 +247,58 @@ const DataManager = {
                 { mainCode: 'CARD_SALES', code: 'CARD_SHINHAN', name: '매출-신한' },
                 { mainCode: 'CARD_SALES', code: 'CARD_HYUNDAI', name: '매출-현대' },
                 { mainCode: 'CARD_SALES', code: 'CARD_BC', name: '매출-BC카드' },
+
+                // 인건비 중분류
+                { mainCode: 'LABOR', code: 'SALARY', name: '급여' },
+                { mainCode: 'LABOR', code: 'EMPLOYEE_INSURANCE', name: '연금/작가/보건교 등' },
+                { mainCode: 'LABOR', code: 'BONUS', name: '상여' },
+                { mainCode: 'LABOR', code: 'SEVERANCE', name: '퇴직세/퇴직금' },
                 
-                // 관리비 중분류
-                { mainCode: 'ADMIN', code: 'RENT', name: '임대료' },
-                { mainCode: 'ADMIN', code: 'UTILITY', name: '공공/전기/통신료 등' },
-                { mainCode: 'ADMIN', code: 'CLEANING', name: '청소' },
-                { mainCode: 'ADMIN', code: 'SUPPLY', name: '전자제품/부자재' },
-                { mainCode: 'ADMIN', code: 'VEHICLE', name: '차량유지' },
+                // 용역비용 중분류
+                { mainCode: 'UTILITY', code: 'ELECTRICITY', name: '전기' },
+                { mainCode: 'UTILITY', code: 'WATER_GAS', name: '연락처/가/전교 등' },
+                { mainCode: 'UTILITY', code: 'CLEANING', name: '청직' },
+                { mainCode: 'UTILITY', code: '4DEPOSIT', name: '4대보험' },
                 
-                // 세금 중분류
-                { mainCode: 'TAX', code: 'VAT', name: '부가가치세' },
-                { mainCode: 'TAX', code: 'INCOME_TAX', name: '갑종-근로' },
-                { mainCode: 'TAX', code: 'CORPORATE_TAX', name: '갑종-글로벌교' },
-                { mainCode: 'TAX', code: 'PROPERTY_TAX', name: '갑종-종대생성' },
-                { mainCode: 'TAX', code: 'LOCAL_TAX', name: '갑종-오아마비스' },
-                { mainCode: 'TAX', code: 'REGISTRATION_TAX', name: '갑종-에메트' },
-                { mainCode: 'TAX', code: 'OTHER_TAX', name: '갑종-원두' },
-                { mainCode: 'TAX', code: 'FRANCHISE_TAX', name: '갑종-아몬드젤리' },
-                { mainCode: 'TAX', code: 'SALES_TAX', name: '갑종-전성' },
-                { mainCode: 'TAX', code: 'PUBLIC_TAX', name: '갑종-전선물건' },
-                { mainCode: 'TAX', code: 'BUSINESS_TAX', name: '갑종-커피원빈지' },
-                { mainCode: 'TAX', code: 'SERVICE_TAX', name: '갑종-피피스' },
-                { mainCode: 'TAX', code: 'LUXURY_TAX', name: '갑종-플라또' },
-                { mainCode: 'TAX', code: 'ALCOHOL_TAX', name: '갑종-홀추' },
+                // 원자재 외 중분류
+                { mainCode: 'RESTAURANT', code: 'GROCERY', name: '원가-그리' },
+                { mainCode: 'RESTAURANT', code: 'DELIVERY', name: '원가-쿠팡고' },
+                { mainCode: 'RESTAURANT', code: 'CLEANING', name: '원가-롯데홀셀' },
+                { mainCode: 'RESTAURANT', code: 'MART', name: '원가-마트' },
+                { mainCode: 'RESTAURANT', code: 'EQUIPMENT', name: '원가-모아비즈' },
+                { mainCode: 'RESTAURANT', code: 'EMARTS', name: '원가-이마트' },
+                { mainCode: 'RESTAURANT', code: 'PACKAGING', name: '원가-패키징' },
+                { mainCode: 'RESTAURANT', code: 'SALES_PROMOTION', name: '원가-판촉물건' },
+                { mainCode: 'RESTAURANT', code: 'COFFEE_BEANS', name: '원가-커피원빈지' },
+                { mainCode: 'RESTAURANT', code: 'FRUITS', name: '원가-피피스' },
+                { mainCode: 'RESTAURANT', code: 'PLATEAU', name: '원가-플라또' },
+                { mainCode: 'RESTAURANT', code: 'HOT_RECIPE', name: '원가-홀추' },
+                { mainCode: 'RESTAURANT', code: 'ALMOND', name: '원가-아몬드' },
+                { mainCode: 'RESTAURANT', code: 'JUICE', name: '원가-쥬스' },
+                { mainCode: 'RESTAURANT', code: 'MATCHA', name: '원가-말차' },
+                { mainCode: 'RESTAURANT', code: 'USA', name: '원가-플라토' },
                 
-                // 공과금 중분류
-                { mainCode: 'FIXED_CHARGE', code: 'POSTAL', name: '우체국등' },
-                { mainCode: 'FIXED_CHARGE', code: 'STARBUCKS', name: '스타벅스카드 외' },
-                
-                // 멤버쉽카드 중분류
-                { mainCode: 'MEMBERSHIP', code: 'MEMBER_CARD', name: '멤버쉽카드' },
+                // 기타지출 중분류
+                { mainCode: 'OTHER_EXPENSE', code: 'INTEREST', name: '이자수입' },
+                { mainCode: 'OTHER_EXPENSE', code: 'STAR_CARD', name: '스타카드 외' },
+                { mainCode: 'OTHER_EXPENSE', code: 'INVESTMENT', name: '시설투자' },
+                { mainCode: 'OTHER_EXPENSE', code: 'ELECTRONICS', name: '전자제품' },
                 
                 // 판매관리비 중분류
-                { mainCode: 'RETAIL', code: 'WHOLESALE_FEE', name: '지급장려(집중품)' },
-                { mainCode: 'RETAIL', code: 'RETAIL_FEE', name: '지급장려(영산품)' },
-                { mainCode: 'RETAIL', code: 'TRANSIT', name: '운반비' },
+                { mainCode: 'RETAIL', code: 'COMMISSION', name: '관리비' },
                 { mainCode: 'RETAIL', code: 'LGU', name: 'LGU' },
-                { mainCode: 'RETAIL', code: 'AIRCON', name: '에어컨' },
-                { mainCode: 'RETAIL', code: 'LIGHTING', name: '조명' },
-                { mainCode: 'RETAIL', code: 'SECURITY', name: '보안' },
+                { mainCode: 'RETAIL', code: 'AIRCON', name: '가스' },
+                { mainCode: 'RETAIL', code: 'SECURITY', name: '보험' },
                 { mainCode: 'RETAIL', code: 'POS', name: '세무대행' },
-                { mainCode: 'RETAIL', code: 'SOFTWARE', name: '세스코' },
-                { mainCode: 'RETAIL', code: 'SALES_PROM', name: '인시용품' },
-                { mainCode: 'RETAIL', code: 'ADVERTISING', name: '아르질' },
+                { mainCode: 'RETAIL', code: 'CESCO', name: '세스코' },
+                { mainCode: 'RETAIL', code: 'INSECT', name: '인시용품' },
+                { mainCode: 'RETAIL', code: 'AZGIL', name: '알질' },
+                { mainCode: 'RETAIL', code: 'JOOKAPGM', name: '주각금' },
+                { mainCode: 'RETAIL', code: 'ALBA_CARD', name: '알바관리(카더)' },
                 
-                // 기타출금 중분류
-                { mainCode: 'INVESTMENT', code: 'MARKET', name: '마켓증가' },
-                { mainCode: 'INVESTMENT', code: 'TRANSFER', name: '지타증가' },
-                { mainCode: 'INVESTMENT', code: 'HOME_LOAN', name: '자택담' },
-                { mainCode: 'INVESTMENT', code: 'OFFICE_LOAN', name: '대출 상환' },
-                
-                // 수입 중분류
-                { mainCode: 'INCOME', code: 'SALES', name: '수입' }
+                // 세금 중분류
+                { mainCode: 'TAX', code: 'FACILITY_FUND', name: '시설자금' },
+                { mainCode: 'TAX', code: 'BUSINESS_ASSETS', name: '사업부자' }
             ]
         };
         
@@ -505,7 +515,22 @@ const DataManager = {
     },
 
     // 일회성 지출 추가
-    addOneTimeExpense(date, amount, description, mainCategory, subCategory, isActualPayment = true) {
+    addOneTimeExpense(date, amount, description, mainCategory, subCategory, isActualPayment = true, vendor = '') {
+        // 객체 형태로 전달된 경우 처리
+        if (typeof date === 'object' && date !== null && !(date instanceof Date)) {
+            const params = date; // 전달된 객체
+            return this.addOneTimeExpense(
+                params.date,
+                params.amount,
+                params.description,
+                params.mainCategory,
+                params.subCategory,
+                params.isActualPayment !== undefined ? params.isActualPayment : true,
+                params.vendor || ''
+            );
+        }
+        
+        // 일반적인 파라미터로 전달된 경우 처리
         const newExpense = {
             id: this.getNextId(),  // 고유 ID 추가
             date,
@@ -513,7 +538,8 @@ const DataManager = {
             description,
             mainCategory,
             subCategory,
-            isActualPayment: isActualPayment  // 실입금 여부 추가
+            isActualPayment: isActualPayment,  // 실입금 여부 추가
+            vendor: vendor  // 거래처 필드 추가
         };
         
         this.data.oneTimeExpenses.push(newExpense);
@@ -607,7 +633,7 @@ const DataManager = {
     },
 
     // 일회성 지출 수정
-    updateOneTimeExpense(id, date, amount, description, mainCategory, subCategory, isActualPayment = true) {
+    updateOneTimeExpense(id, date, amount, description, mainCategory, subCategory, isActualPayment = true, vendor = '') {
         console.log('updateOneTimeExpense 호출됨. ID:', id, typeof id);
         
         // findOneTimeExpenseIndexById 함수를 사용하여 인덱스 찾기
@@ -633,6 +659,7 @@ const DataManager = {
                 mainCategory,
                 subCategory,
                 isActualPayment,
+                vendor,  // 거래처 필드 추가
                 recurringId, // 반복 항목과의 연결 유지
                 modified: true // 이 항목이 수정되었음을 표시
             };
@@ -788,7 +815,7 @@ const DataManager = {
                             id: this.getNextId(),  // 고유 ID 추가
                             date: formattedDate,
                             amount: recurringExpense.amount,
-                            description: `[반복] ${recurringExpense.description}`,
+                            description: `${recurringExpense.description}`,
                             mainCategory: recurringExpense.mainCategory,
                             subCategory: recurringExpense.subCategory,
                             isActualPayment: recurringExpense.isActualPayment,
@@ -878,7 +905,7 @@ const DataManager = {
                             id: this.getNextId(),  // 고유 ID 추가
                             date: formattedDate,
                             amount: recurringExpense.amount,
-                            description: `[반복] ${recurringExpense.description}`,
+                            description: `${recurringExpense.description}`,
                             mainCategory: recurringExpense.mainCategory,
                             subCategory: recurringExpense.subCategory,
                             isActualPayment: recurringExpense.isActualPayment,
@@ -959,14 +986,22 @@ const DataManager = {
     },
     
     // 대분류 추가
-    addMainCategory(code, name, type = 'expense') {
+    addMainCategory(code, name, type = 'expense', order = null) {
         // 중복 코드 검사
         if (this.data.categories.main.some(c => c.code === code)) {
             throw new Error(`이미 사용 중인 대분류 코드입니다: ${code}`);
         }
         
+        // 기본 순서는 마지막 순서 + 1
+        if (order === null) {
+            const maxOrder = this.data.categories.main.reduce(
+                (max, category) => Math.max(max, category.order || 0), 0
+            );
+            order = maxOrder + 1;
+        }
+        
         // 대분류 추가
-        this.data.categories.main.push({ code, name, type });
+        this.data.categories.main.push({ code, name, type, order });
         this.saveData();
         return this.data.categories.main;
     },
@@ -1078,5 +1113,60 @@ const DataManager = {
         const id = this.data.nextId++;
         this.saveData();
         return id;
-    }
+    },
+
+    // 대분류 이름 변경
+    updateMainCategoryName(index, newName) {
+        if (index < 0 || index >= this.data.categories.main.length) {
+            throw new Error('유효하지 않은 대분류 인덱스입니다.');
+        }
+        
+        if (!newName || newName.trim() === '') {
+            throw new Error('분류명은 비워둘 수 없습니다.');
+        }
+        
+        // 이름 중복 확인
+        const isDuplicate = this.data.categories.main.some((category, i) => 
+            i !== index && category.name.toLowerCase() === newName.trim().toLowerCase()
+        );
+        
+        if (isDuplicate) {
+            throw new Error(`'${newName}' 분류명은 이미 사용 중입니다.`);
+        }
+        
+        // 이름 업데이트
+        this.data.categories.main[index].name = newName.trim();
+        this.saveData();
+        
+        return this.data.categories.main[index];
+    },
+    
+    // 중분류 이름 변경
+    updateSubCategoryName(index, newName) {
+        if (index < 0 || index >= this.data.categories.sub.length) {
+            throw new Error('유효하지 않은 중분류 인덱스입니다.');
+        }
+        
+        if (!newName || newName.trim() === '') {
+            throw new Error('분류명은 비워둘 수 없습니다.');
+        }
+        
+        // 해당 대분류 내에서 이름 중복 확인
+        const mainCode = this.data.categories.sub[index].mainCode;
+        const isDuplicate = this.data.categories.sub.some((category, i) => 
+            i !== index && 
+            category.mainCode === mainCode && 
+            category.name.toLowerCase() === newName.trim().toLowerCase()
+        );
+        
+        if (isDuplicate) {
+            throw new Error(`'${newName}' 분류명은 이미 사용 중입니다.`);
+        }
+        
+        // 이름 업데이트
+        this.data.categories.sub[index].name = newName.trim();
+        this.saveData();
+        
+        return this.data.categories.sub[index];
+    },
 }; 

@@ -298,7 +298,8 @@ const App = {
                         isIncome: true,
                         total: category.totalAmount,
                         monthly: [...category.monthlyAmount],
-                        subCategories: []
+                        subCategories: [],
+                        order: category.order || 999 // 순서 정보 추가
                     };
                 }
                 
@@ -384,43 +385,45 @@ const App = {
         totalIncomeRow.className = 'finance-row-main';
         totalIncomeRow.innerHTML = `
             <td class="finance-sticky-col finance-first-col">수입</td>
-            <td class="finance-sticky-col finance-second-col text-end finance-positive">${Utils.number.formatCurrency(totalIncomeAmount)}</td>
+            <td class="finance-sticky-col finance-second-col text-end finance-positive clickable-amount" data-month="all" data-type="income" data-amount="${totalIncomeAmount}">${Utils.number.formatCurrency(totalIncomeAmount)}</td>
             ${monthlyIncomeAmount.map((amount, idx) => `
                 <td class="text-end finance-positive clickable-amount" data-month="${idx+1}" data-type="income" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
             `).join('')}
         `;
         financeBody.appendChild(totalIncomeRow);
         
-        // 수입 카테고리 행 추가
-        Object.values(incomeCategories).forEach(category => {
-            // 대분류 행 추가
-            const categoryRow = document.createElement('tr');
-            categoryRow.className = 'finance-row-subtotal';
-            categoryRow.innerHTML = `
-                <td class="finance-sticky-col finance-first-col">${category.name}</td>
-                <td class="finance-sticky-col finance-second-col text-end">${Utils.number.formatCurrency(category.total)}</td>
-                ${category.monthly.map((amount, idx) => `
-                    <td class="text-end clickable-amount" data-month="${idx+1}" data-type="income" data-category="${category.name}" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
-                `).join('')}
-            `;
-            financeBody.appendChild(categoryRow);
-            
-            // 중분류 행 추가
-            category.subCategories.forEach(subCategory => {
-                const subCategoryRow = document.createElement('tr');
-                subCategoryRow.innerHTML = `
-                    <td class="finance-sticky-col finance-first-col"><span class="finance-row-sub">${subCategory.name}</span></td>
-                    <td class="finance-sticky-col finance-second-col text-end">${Utils.number.formatCurrency(subCategory.total)}</td>
-                    ${subCategory.monthly.map((amount, idx) => `
-                        <td class="text-end clickable-amount" data-month="${idx+1}" data-type="income" data-category="${category.name}" data-subcategory="${subCategory.name}" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
+        // 수입 카테고리 행 추가 - 순서대로 정렬하여 표시
+        Object.values(incomeCategories)
+            .sort((a, b) => a.order - b.order) // 순서대로 정렬
+            .forEach(category => {
+                // 대분류 행 추가
+                const categoryRow = document.createElement('tr');
+                categoryRow.className = 'finance-row-subtotal';
+                categoryRow.innerHTML = `
+                    <td class="finance-sticky-col finance-first-col">${category.name}</td>
+                    <td class="finance-sticky-col finance-second-col text-end clickable-amount" data-month="all" data-type="income" data-category="${category.name}" data-amount="${category.total}">${Utils.number.formatCurrency(category.total)}</td>
+                    ${category.monthly.map((amount, idx) => `
+                        <td class="text-end clickable-amount" data-month="${idx+1}" data-type="income" data-category="${category.name}" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
                     `).join('')}
                 `;
-                financeBody.appendChild(subCategoryRow);
+                financeBody.appendChild(categoryRow);
+                
+                // 중분류 행 추가
+                category.subCategories.forEach(subCategory => {
+                    const subCategoryRow = document.createElement('tr');
+                    subCategoryRow.innerHTML = `
+                        <td class="finance-sticky-col finance-first-col"><span class="finance-row-sub">${subCategory.name}</span></td>
+                        <td class="finance-sticky-col finance-second-col text-end clickable-amount" data-month="all" data-type="income" data-category="${category.name}" data-subcategory="${subCategory.name}" data-amount="${subCategory.total}">${Utils.number.formatCurrency(subCategory.total)}</td>
+                        ${subCategory.monthly.map((amount, idx) => `
+                            <td class="text-end clickable-amount" data-month="${idx+1}" data-type="income" data-category="${category.name}" data-subcategory="${subCategory.name}" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
+                        `).join('')}
+                    `;
+                    financeBody.appendChild(subCategoryRow);
+                });
             });
-        });
         
-        // 3. 지출 섹션 헤더 - 삭제
-        // 지출 카테고리 데이터 처리
+        // 3. 지출 데이터 처리
+        // 지출 카테고리를 찾아서 그룹화
         const expenseCategories = {};
         let totalExpenseAmount = 0;
         const monthlyExpenseAmount = Array(12).fill(0);
@@ -436,7 +439,8 @@ const App = {
                         isIncome: false,
                         total: category.totalAmount,
                         monthly: [...category.monthlyAmount],
-                        subCategories: []
+                        subCategories: [],
+                        order: category.order || 999 // 순서 정보 추가
                     };
                 }
                 
@@ -517,45 +521,47 @@ const App = {
             }
         });
         
-        // 총지출 행 추가
+        // 총 지출 행 추가
         const totalExpenseRow = document.createElement('tr');
         totalExpenseRow.className = 'finance-row-main';
         totalExpenseRow.innerHTML = `
             <td class="finance-sticky-col finance-first-col">지출</td>
-            <td class="finance-sticky-col finance-second-col text-end finance-negative">${Utils.number.formatCurrency(totalExpenseAmount)}</td>
+            <td class="finance-sticky-col finance-second-col text-end finance-negative clickable-amount" data-month="all" data-type="expense" data-amount="${totalExpenseAmount}">${Utils.number.formatCurrency(totalExpenseAmount)}</td>
             ${monthlyExpenseAmount.map((amount, idx) => `
                 <td class="text-end finance-negative clickable-amount" data-month="${idx+1}" data-type="expense" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
             `).join('')}
         `;
         financeBody.appendChild(totalExpenseRow);
         
-        // 지출 카테고리 행 추가
-        Object.values(expenseCategories).forEach(category => {
-            // 대분류 행 추가
-            const categoryRow = document.createElement('tr');
-            categoryRow.className = 'finance-row-subtotal';
-            categoryRow.innerHTML = `
-                <td class="finance-sticky-col finance-first-col">${category.name}</td>
-                <td class="finance-sticky-col finance-second-col text-end">${Utils.number.formatCurrency(category.total)}</td>
-                ${category.monthly.map((amount, idx) => `
-                    <td class="text-end clickable-amount" data-month="${idx+1}" data-type="expense" data-category="${category.name}" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
-                `).join('')}
-            `;
-            financeBody.appendChild(categoryRow);
-            
-            // 중분류 행 추가
-            category.subCategories.forEach(subCategory => {
-                const subCategoryRow = document.createElement('tr');
-                subCategoryRow.innerHTML = `
-                    <td class="finance-sticky-col finance-first-col"><span class="finance-row-sub">${subCategory.name}</span></td>
-                    <td class="finance-sticky-col finance-second-col text-end">${Utils.number.formatCurrency(subCategory.total)}</td>
-                    ${subCategory.monthly.map((amount, idx) => `
-                        <td class="text-end clickable-amount" data-month="${idx+1}" data-type="expense" data-category="${category.name}" data-subcategory="${subCategory.name}" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
+        // 지출 카테고리 행 추가 - 순서대로 정렬하여 표시
+        Object.values(expenseCategories)
+            .sort((a, b) => a.order - b.order) // 순서대로 정렬
+            .forEach(category => {
+                // 대분류 행 추가
+                const categoryRow = document.createElement('tr');
+                categoryRow.className = 'finance-row-subtotal';
+                categoryRow.innerHTML = `
+                    <td class="finance-sticky-col finance-first-col">${category.name}</td>
+                    <td class="finance-sticky-col finance-second-col text-end clickable-amount" data-month="all" data-type="expense" data-category="${category.name}" data-amount="${category.total}">${Utils.number.formatCurrency(category.total)}</td>
+                    ${category.monthly.map((amount, idx) => `
+                        <td class="text-end clickable-amount" data-month="${idx+1}" data-type="expense" data-category="${category.name}" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
                     `).join('')}
                 `;
-                financeBody.appendChild(subCategoryRow);
+                financeBody.appendChild(categoryRow);
+                
+                // 중분류 행 추가
+                category.subCategories.forEach(subCategory => {
+                    const subCategoryRow = document.createElement('tr');
+                    subCategoryRow.innerHTML = `
+                        <td class="finance-sticky-col finance-first-col"><span class="finance-row-sub">${subCategory.name}</span></td>
+                        <td class="finance-sticky-col finance-second-col text-end clickable-amount" data-month="all" data-type="expense" data-category="${category.name}" data-subcategory="${subCategory.name}" data-amount="${subCategory.total}">${Utils.number.formatCurrency(subCategory.total)}</td>
+                        ${subCategory.monthly.map((amount, idx) => `
+                            <td class="text-end clickable-amount" data-month="${idx+1}" data-type="expense" data-category="${category.name}" data-subcategory="${subCategory.name}" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
+                        `).join('')}
+                    `;
+                    financeBody.appendChild(subCategoryRow);
+                });
             });
-        });
         
         // 기말잔액 행 추가 (기초잔액 + 순수입)
         const finalBalanceRow = document.createElement('tr');
@@ -603,7 +609,7 @@ const App = {
         if (!clickableCell) return; // 클릭 가능한 셀이 아니면 무시
         
         console.log('금액 셀 클릭됨', clickableCell);
-        const month = parseInt(clickableCell.dataset.month);
+        const month = clickableCell.dataset.month; // 문자열 형태로 유지 (월이 'all'일 수 있음)
         const type = clickableCell.dataset.type;
         const category = clickableCell.dataset.category || '';
         const subcategory = clickableCell.dataset.subcategory || '';
@@ -663,7 +669,13 @@ const App = {
         popup.className = 'expense-popup';
         
         // 제목 생성 (수입/지출 구분, 카테고리 정보)
-        let titleText = `${DataManager.data.year}년 ${month}월 `;
+        let titleText = '';
+        if (month === 'all') {
+            titleText = `${DataManager.data.year}년 연간 합계 `;
+        } else {
+            titleText = `${DataManager.data.year}년 ${month}월 `;
+        }
+        
         if (type === 'income') {
             titleText += '수입';
         } else if (type === 'expense') {
@@ -673,10 +685,8 @@ const App = {
         }
         
         if (category) {
-            titleText += ` - ${category}`;
-            if (subcategory) {
-                titleText += ` > ${subcategory}`;
-            }
+            // 카테고리만 표시 (서브카테고리가 있으면 서브카테고리만 표시)
+            titleText += ` - ${subcategory || category}`;
         }
         
         // 팝업 내용 생성
@@ -710,28 +720,11 @@ const App = {
                                     <th>금액</th>
                                     <th>내용</th>
                                     <th>분류</th>
-                                    <th>실입금</th>
+                                    <th>거래처</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${items.length > 0 ? items.map(item => {
-                                    const isIncome = item.isIncome;
-                                    const amountClass = isIncome ? 'text-primary' : 'text-danger';
-                                    const amountPrefix = isIncome ? '+' : '-';
-                                    const actualPaymentBadge = item.isActualPayment ? 
-                                        '<span class="badge bg-success">✓</span>' : 
-                                        '<span class="badge bg-secondary">✗</span>';
-                                    
-                                    return `
-                                        <tr>
-                                            <td>${item.date}</td>
-                                            <td class="${amountClass}">${amountPrefix}${Utils.number.formatCurrency(item.amount)}</td>
-                                            <td>${item.description}</td>
-                                            <td>${item.categoryName}${item.subCategoryName ? ` > ${item.subCategoryName}` : ''}</td>
-                                            <td class="text-center">${actualPaymentBadge}</td>
-                                        </tr>
-                                    `;
-                                }).join('') : '<tr><td colspan="5" class="text-center">항목이 없습니다.</td></tr>'}
+                                ${items.length > 0 ? (month === 'all' ? this.renderGroupedItems(items) : this.renderItems(items)) : '<tr><td colspan="5" class="text-center">항목이 없습니다.</td></tr>'}
                             </tbody>
                         </table>
                     </div>
@@ -763,14 +756,84 @@ const App = {
         });
     },
     
+    // 항목 렌더링 함수 - 월별 상세보기용
+    renderItems(items) {
+        return items.map(item => {
+            const isIncome = item.isIncome;
+            const amountClass = isIncome ? 'text-primary' : 'text-danger';
+            const amountPrefix = isIncome ? '+' : '-';
+            
+            // 분류 표시 방식 변경 - 중분류가 있으면 중분류만, 없으면 대분류 표시
+            const categoryDisplay = item.subCategoryName ? item.subCategoryName : item.categoryName;
+            
+            return `
+                <tr>
+                    <td>${item.date}</td>
+                    <td class="${amountClass}">${amountPrefix}${Utils.number.formatCurrency(item.amount)}</td>
+                    <td>${item.description}${item.isRecurring ? ' <span class="badge bg-info">반복</span>' : ''}</td>
+                    <td>${categoryDisplay}</td>
+                    <td>${item.vendor || ''}</td>
+                </tr>
+            `;
+        }).join('');
+    },
+    
+    // 월별 그룹화된 항목 렌더링 함수 - 연간 합계용
+    renderGroupedItems(items) {
+        // 월별로 항목 그룹화
+        const groupedByMonth = {};
+        const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+        
+        items.forEach(item => {
+            const date = new Date(item.date);
+            const monthIndex = date.getMonth();
+            
+            if (!groupedByMonth[monthIndex]) {
+                groupedByMonth[monthIndex] = [];
+            }
+            
+            groupedByMonth[monthIndex].push(item);
+        });
+        
+        // 월별로 정렬하여 렌더링
+        let html = '';
+        for (let i = 0; i < 12; i++) {
+            if (groupedByMonth[i] && groupedByMonth[i].length > 0) {
+                // 월별 합계 계산
+                let monthlyIncome = 0;
+                let monthlyExpense = 0;
+                groupedByMonth[i].forEach(item => {
+                    if (item.isIncome) {
+                        monthlyIncome += item.amount;
+                    } else {
+                        monthlyExpense += item.amount;
+                    }
+                });
+                
+                // 월 헤더 추가
+                html += `
+                    <tr class="table-secondary">
+                        <td colspan="5" class="fw-bold">${monthNames[i]} (수입: ${Utils.number.formatCurrency(monthlyIncome)}, 지출: ${Utils.number.formatCurrency(monthlyExpense)})</td>
+                    </tr>
+                `;
+                
+                // 항목 추가
+                html += this.renderItems(groupedByMonth[i]);
+            }
+        }
+        
+        return html;
+    },
+    
     // 월별 항목 가져오기
     getMonthlyItems(month, type, category, subcategory) {
         console.log('getMonthlyItems 호출됨:', { month, type, category, subcategory });
         
         const year = DataManager.data.year;
-        const monthStr = month.toString().padStart(2, '0');
-        const yearMonth = `${year}-${monthStr}`;
-        console.log('검색할 년월:', yearMonth);
+        const isAllMonths = month === 'all';
+        const monthStr = !isAllMonths ? month.toString().padStart(2, '0') : '';
+        const yearMonth = !isAllMonths ? `${year}-${monthStr}` : `${year}`;
+        console.log('검색할 년월:', yearMonth, '전체 월 여부:', isAllMonths);
         
         // DataManager 데이터 상태 확인
         console.log('DataManager 데이터:', {
@@ -787,9 +850,25 @@ const App = {
         console.log('총 oneTimeExpenses 항목 수:', DataManager.data.oneTimeExpenses.length);
         
         DataManager.data.oneTimeExpenses.forEach((expense, index) => {
-            // 해당 월의 지출만 필터링
-            if (expense.date && expense.date.startsWith(yearMonth)) {
-                console.log(`항목 #${index} 일치하는 날짜:`, expense.date, expense);
+            // 날짜가 유효한지 확인
+            if (!expense.date) {
+                console.log(`항목 #${index} 날짜 없음, 제외`);
+                return;
+            }
+            
+            // 날짜가 문자열인지 확인하고 문자열로 변환
+            const dateStr = typeof expense.date === 'string' ? expense.date : 
+                           (expense.date instanceof Date ? expense.date.toISOString().split('T')[0] : null);
+            
+            // 날짜가 유효하지 않으면 건너뜀
+            if (!dateStr) {
+                console.log(`항목 #${index} 날짜 변환 실패, 제외`);
+                return;
+            }
+            
+            // 해당 월 또는 해당 연도의 지출만 필터링
+            if (isAllMonths ? dateStr.startsWith(yearMonth) : dateStr.startsWith(yearMonth)) {
+                console.log(`항목 #${index} 일치하는 날짜:`, dateStr, expense);
                 
                 // 실입금 항목만 필터링
                 if (expense.isActualPayment !== true) {
@@ -829,16 +908,91 @@ const App = {
                 // 지출/수입 항목 추가
                 result.push({
                     id: expense.id,
-                    date: expense.date,
+                    date: dateStr,
                     description: expense.description,
                     amount: expense.amount,
                     categoryName: mainCategory?.name || '미분류',
                     subCategoryName: subCategoryObj?.name || '',
                     isIncome: isIncome,
-                    isActualPayment: expense.isActualPayment === true
+                    isActualPayment: expense.isActualPayment === true,
+                    vendor: expense.vendor || ''
                 });
             }
         });
+        
+        // 반복 지출/수입 항목 처리 (합계 열 클릭 시에만 처리)
+        if (isAllMonths) {
+            DataManager.data.recurringExpenses.forEach((expense, index) => {
+                // 실입금 항목만 필터링
+                if (expense.isActualPayment !== true) {
+                    return;
+                }
+                
+                // 대분류 정보 찾기
+                const mainCategory = DataManager.data.categories.main.find(c => c.code === expense.mainCategory);
+                const isIncome = mainCategory?.type === 'income';
+                
+                // 수입/지출 타입 필터링
+                if ((type === 'income' && !isIncome) || (type === 'expense' && isIncome)) {
+                    return;
+                }
+                
+                // 카테고리 필터링
+                if (category && mainCategory?.name !== category) {
+                    return;
+                }
+                
+                // 중분류 정보 찾기
+                const subCategoryObj = DataManager.data.categories.sub.find(c => c.code === expense.subCategory);
+                
+                // 서브카테고리 필터링
+                if (subcategory && subCategoryObj?.name !== subcategory) {
+                    return;
+                }
+                
+                // 시작일과 종료일 확인
+                if (expense.startDate) {
+                    const startDate = new Date(expense.startDate + '-01');
+                    let endDate;
+                    
+                    if (expense.endDate) {
+                        endDate = new Date(expense.endDate + '-01');
+                    } else {
+                        endDate = new Date();
+                    }
+                    
+                    const startYear = startDate.getFullYear();
+                    const startMonth = startDate.getMonth();
+                    const endYear = endDate.getFullYear();
+                    const endMonth = endDate.getMonth();
+                    
+                    // 해당 년도에 속하는 달만 처리
+                    if (startYear <= year && year <= endYear) {
+                        // 반복 항목을 월별로 추가
+                        const yearStartMonth = (startYear === year) ? startMonth : 0;
+                        const yearEndMonth = (endYear === year) ? endMonth : 11;
+                        
+                        for (let m = yearStartMonth; m <= yearEndMonth; m++) {
+                            const monthWithLeadingZero = (m + 1).toString().padStart(2, '0');
+                            const itemDate = `${year}-${monthWithLeadingZero}-01`;
+                            
+                            result.push({
+                                id: expense.id,
+                                date: itemDate,
+                                description: expense.description,
+                                amount: expense.amount,
+                                categoryName: mainCategory?.name || '미분류',
+                                subCategoryName: subCategoryObj?.name || '',
+                                isIncome: isIncome,
+                                isActualPayment: expense.isActualPayment === true,
+                                isRecurring: true,
+                                vendor: expense.vendor || ''
+                            });
+                        }
+                    }
+                }
+            });
+        }
         
         // 날짜 기준 정렬
         result.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -859,7 +1013,8 @@ const App = {
                 name: mainCategory.name,
                 isIncome: mainCategory.type === 'income',
                 totalAmount: 0,
-                monthlyAmount: Array(12).fill(0)
+                monthlyAmount: Array(12).fill(0),
+                order: mainCategory.order || 999 // 순서 정보 추가
             };
         });
         
