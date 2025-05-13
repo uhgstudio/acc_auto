@@ -290,7 +290,7 @@ const ExpenseCalendar = {
         let totalIncome = 0;
         let totalExpense = 0;
         
-        // 분류별로 금액 집계
+        // 분류별로 금액 집계 - 모든 항목 포함
         expenses.forEach(expense => {
             // 대분류 집계
             const mainKey = expense.mainCategory || 'NONE';
@@ -1213,8 +1213,8 @@ const ExpenseCalendar = {
                 const expenseDate = new Date(expense.date);
                 const expenseYear = expenseDate.getFullYear();
                 
-                // 현재 연도의 지출이고 실입금 항목인 경우만 처리
-                if (expenseYear === DataManager.data.year && expense.isActualPayment === true) {
+                // 현재 연도의 지출만 처리, 실입금 항목 여부와 상관없이 모든 항목 포함
+                if (expenseYear === DataManager.data.year) {
                     const expenseMonth = expenseDate.getMonth();
                     
                     // 대분류 정보 찾기
@@ -1258,13 +1258,13 @@ const ExpenseCalendar = {
         
         console.log('월별 원본 데이터 요약:');
         
-        // 모든 일회성 지출/수입 항목을 직접 순회하며 정확히 계산
+        // 모든 일회성 지출/수입 항목을 직접 순회하며 정확히 계산, 실입금 여부 상관없이 모든 항목 포함
         DataManager.data.oneTimeExpenses.forEach(expense => {
             const expenseDate = new Date(expense.date);
             const expenseYear = expenseDate.getFullYear();
             
-            // 현재 선택된 연도의 지출/수입만 계산하고, 실입금 항목만 포함
-            if (expenseYear === DataManager.data.year && expense.isActualPayment === true) {
+            // 현재 선택된 연도의 지출/수입만 계산하고, 모든 항목 포함
+            if (expenseYear === DataManager.data.year) {
                 // 대분류 정보 찾기
                 const mainCategory = DataManager.data.categories.main.find(c => c.code === expense.mainCategory);
                 const isIncome = mainCategory?.type === 'income';
