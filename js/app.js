@@ -240,6 +240,8 @@ const App = {
     
     // 자금수지 렌더링
     renderFinanceStatement() {
+        console.log('renderFinanceStatement 호출됨, 현재 year:', DataManager.data.year);
+        
         const financeBody = document.getElementById('finance-statement-body');
         if (!financeBody) return;
         
@@ -273,8 +275,8 @@ const App = {
         initialBalanceRow.innerHTML = `
             <td class="finance-sticky-col finance-first-col"><기초잔액></td>
             <td class="finance-sticky-col finance-second-col text-end">${Utils.number.formatCurrency(totalInitialBalance)}</td>
-            ${monthlyInitialBalance.map(balance => `
-                <td class="text-end">${Utils.number.formatCurrency(balance)}</td>
+            ${monthlyInitialBalance.map((balance, idx) => `
+                <td class="text-end" data-month="${idx+1}" data-type="initial-balance">${Utils.number.formatCurrency(balance)}</td>
             `).join('')}
         `;
         financeBody.appendChild(initialBalanceRow);
@@ -383,7 +385,9 @@ const App = {
         totalIncomeRow.innerHTML = `
             <td class="finance-sticky-col finance-first-col">총수입</td>
             <td class="finance-sticky-col finance-second-col text-end finance-positive">${Utils.number.formatCurrency(totalIncomeAmount)}</td>
-            ${monthlyIncomeAmount.map(amount => `<td class="text-end finance-positive">${Utils.number.formatCurrency(amount)}</td>`).join('')}
+            ${monthlyIncomeAmount.map((amount, idx) => `
+                <td class="text-end finance-positive clickable-amount" data-month="${idx+1}" data-type="income" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
+            `).join('')}
         `;
         financeBody.appendChild(totalIncomeRow);
         
@@ -395,7 +399,9 @@ const App = {
             categoryRow.innerHTML = `
                 <td class="finance-sticky-col finance-first-col">${category.name}</td>
                 <td class="finance-sticky-col finance-second-col text-end">${Utils.number.formatCurrency(category.total)}</td>
-                ${category.monthly.map(amount => `<td class="text-end">${Utils.number.formatCurrency(amount)}</td>`).join('')}
+                ${category.monthly.map((amount, idx) => `
+                    <td class="text-end clickable-amount" data-month="${idx+1}" data-type="income" data-category="${category.name}" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
+                `).join('')}
             `;
             financeBody.appendChild(categoryRow);
             
@@ -405,7 +411,9 @@ const App = {
                 subCategoryRow.innerHTML = `
                     <td class="finance-sticky-col finance-first-col"><span class="finance-row-sub">${subCategory.name}</span></td>
                     <td class="finance-sticky-col finance-second-col text-end">${Utils.number.formatCurrency(subCategory.total)}</td>
-                    ${subCategory.monthly.map(amount => `<td class="text-end">${Utils.number.formatCurrency(amount)}</td>`).join('')}
+                    ${subCategory.monthly.map((amount, idx) => `
+                        <td class="text-end clickable-amount" data-month="${idx+1}" data-type="income" data-category="${category.name}" data-subcategory="${subCategory.name}" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
+                    `).join('')}
                 `;
                 financeBody.appendChild(subCategoryRow);
             });
@@ -524,7 +532,9 @@ const App = {
         totalExpenseRow.innerHTML = `
             <td class="finance-sticky-col finance-first-col">총지출</td>
             <td class="finance-sticky-col finance-second-col text-end finance-negative">${Utils.number.formatCurrency(totalExpenseAmount)}</td>
-            ${monthlyExpenseAmount.map(amount => `<td class="text-end finance-negative">${Utils.number.formatCurrency(amount)}</td>`).join('')}
+            ${monthlyExpenseAmount.map((amount, idx) => `
+                <td class="text-end finance-negative clickable-amount" data-month="${idx+1}" data-type="expense" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
+            `).join('')}
         `;
         financeBody.appendChild(totalExpenseRow);
         
@@ -536,7 +546,9 @@ const App = {
             categoryRow.innerHTML = `
                 <td class="finance-sticky-col finance-first-col">${category.name}</td>
                 <td class="finance-sticky-col finance-second-col text-end">${Utils.number.formatCurrency(category.total)}</td>
-                ${category.monthly.map(amount => `<td class="text-end">${Utils.number.formatCurrency(amount)}</td>`).join('')}
+                ${category.monthly.map((amount, idx) => `
+                    <td class="text-end clickable-amount" data-month="${idx+1}" data-type="expense" data-category="${category.name}" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
+                `).join('')}
             `;
             financeBody.appendChild(categoryRow);
             
@@ -546,30 +558,321 @@ const App = {
                 subCategoryRow.innerHTML = `
                     <td class="finance-sticky-col finance-first-col"><span class="finance-row-sub">${subCategory.name}</span></td>
                     <td class="finance-sticky-col finance-second-col text-end">${Utils.number.formatCurrency(subCategory.total)}</td>
-                    ${subCategory.monthly.map(amount => `<td class="text-end">${Utils.number.formatCurrency(amount)}</td>`).join('')}
+                    ${subCategory.monthly.map((amount, idx) => `
+                        <td class="text-end clickable-amount" data-month="${idx+1}" data-type="expense" data-category="${category.name}" data-subcategory="${subCategory.name}" data-amount="${amount}">${Utils.number.formatCurrency(amount)}</td>
+                    `).join('')}
                 `;
                 financeBody.appendChild(subCategoryRow);
             });
         });
         
-        // 4. 기말잔액 행 추가
+        // 5. 최종 순수입 행 추가 (수입 - 지출)
+        const netIncomeRow = document.createElement('tr');
+        netIncomeRow.className = 'finance-row-total';
+        
+        const monthlyNetIncome = Array(12).fill(0);
+        for (let i = 0; i < 12; i++) {
+            monthlyNetIncome[i] = monthlyIncomeAmount[i] - monthlyExpenseAmount[i];
+        }
+        const totalNetIncome = totalIncomeAmount - totalExpenseAmount;
+        
+        netIncomeRow.innerHTML = `
+            <td class="finance-sticky-col finance-first-col"><순수입></td>
+            <td class="finance-sticky-col finance-second-col text-end ${totalNetIncome >= 0 ? 'finance-positive' : 'finance-negative'}">${Utils.number.formatCurrency(totalNetIncome)}</td>
+            ${monthlyNetIncome.map((amount, idx) => `
+                <td class="text-end ${amount >= 0 ? 'finance-positive' : 'finance-negative'}">${Utils.number.formatCurrency(amount)}</td>
+            `).join('')}
+        `;
+        financeBody.appendChild(netIncomeRow);
+        
+        // 6. 기말잔액 행 추가 (기초잔액 + 순수입)
         const finalBalanceRow = document.createElement('tr');
         finalBalanceRow.className = 'finance-row-total';
         
-        // 월별 최종 잔액 계산
         const monthlyFinalBalance = monthlyBalanceData.map(data => data.finalBalance);
         const totalFinalBalance = monthlyFinalBalance[11] || 0; // 12월의 최종 잔액이 연간 총 잔액
         
         finalBalanceRow.innerHTML = `
             <td class="finance-sticky-col finance-first-col"><기말잔액></td>
             <td class="finance-sticky-col finance-second-col text-end ${totalFinalBalance >= 0 ? 'finance-positive' : 'finance-negative'}">${Utils.number.formatCurrency(totalFinalBalance)}</td>
-            ${monthlyFinalBalance.map(balance => `
-                <td class="text-end ${balance >= 0 ? 'finance-positive' : 'finance-negative'}">
-                    ${Utils.number.formatCurrency(balance)}
-                </td>
+            ${monthlyFinalBalance.map((balance, idx) => `
+                <td class="text-end ${balance >= 0 ? 'finance-positive' : 'finance-negative'}" data-month="${idx+1}" data-type="final-balance">${Utils.number.formatCurrency(balance)}</td>
             `).join('')}
         `;
         financeBody.appendChild(finalBalanceRow);
+        
+        // 금액 셀에 클릭 이벤트 설정 - 이벤트 위임 방식으로 변경
+        console.log('자금수지표 렌더링 완료, 이벤트 설정 시작');
+        
+        // 부모 요소(financeBody)에 이벤트 위임
+        financeBody.removeEventListener('click', this.handleFinanceTableClick); // 기존 이벤트 제거
+        financeBody.addEventListener('click', this.handleFinanceTableClick.bind(this));
+        
+        // CSS 클래스 추가 (클릭 가능한 요소 강조)
+        const clickableCells = financeBody.querySelectorAll('.clickable-amount');
+        console.log('클릭 가능한 셀 개수:', clickableCells.length);
+        
+        clickableCells.forEach(cell => {
+            const amount = parseFloat(cell.dataset.amount);
+            console.log('셀 데이터:', cell.dataset, '금액:', amount);
+            
+            if (amount > 0) {
+                cell.style.cursor = 'pointer';
+                cell.title = '클릭하여 상세 내역 보기';
+                cell.classList.add('finance-clickable'); // 시각적으로 클릭 가능함을 표시
+            }
+        });
+    },
+    
+    // 자금수지표 클릭 이벤트 핸들러 (이벤트 위임 방식)
+    handleFinanceTableClick(e) {
+        // 클릭된 요소 또는 부모 요소가 clickable-amount 클래스를 가지고 있는지 확인
+        const clickableCell = e.target.closest('.clickable-amount');
+        if (!clickableCell) return; // 클릭 가능한 셀이 아니면 무시
+        
+        console.log('금액 셀 클릭됨', clickableCell);
+        const month = parseInt(clickableCell.dataset.month);
+        const type = clickableCell.dataset.type;
+        const category = clickableCell.dataset.category || '';
+        const subcategory = clickableCell.dataset.subcategory || '';
+        const amount = parseFloat(clickableCell.dataset.amount);
+        
+        console.log('클릭한 셀 정보:', { month, type, category, subcategory, amount });
+        
+        if (amount > 0) {
+            // 시각적 피드백 제공
+            clickableCell.style.backgroundColor = 'rgba(0, 123, 255, 0.2)';
+            setTimeout(() => {
+                clickableCell.style.backgroundColor = '';
+            }, 300);
+            
+            // 상세 정보 표시
+            this.showMonthlyDetail(month, type, category, subcategory);
+        }
+    },
+    
+    // 월별 상세 내역 팝업 표시
+    showMonthlyDetail(month, type, category, subcategory) {
+        console.log('showMonthlyDetail 호출됨:', { month, type, category, subcategory });
+        
+        // 기존 팝업 제거
+        const existingPopup = document.getElementById('monthly-detail-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+        
+        // 해당 월의 지출/수입 항목 가져오기
+        const items = this.getMonthlyItems(month, type, category, subcategory);
+        console.log('가져온 항목 수:', items.length, '항목 목록:', items);
+        
+        // 합계 계산 (isIncome에 따라 수입/지출 구분)
+        let totalIncome = 0;
+        let totalExpense = 0;
+        
+        items.forEach(item => {
+            if (item.isIncome) {
+                totalIncome += item.amount;
+            } else {
+                totalExpense += item.amount;
+            }
+        });
+        
+        // 순액 계산
+        const netAmount = totalIncome - totalExpense;
+        const netPrefix = netAmount >= 0 ? '+' : '-';
+        const netClass = netAmount >= 0 ? 'text-primary' : 'text-danger';
+        
+        // 전체 합계 (표시 목적)
+        const totalAmount = totalIncome + totalExpense;
+        
+        // 팝업 컨테이너 생성
+        const popup = document.createElement('div');
+        popup.id = 'monthly-detail-popup';
+        popup.className = 'expense-popup';
+        
+        // 제목 생성 (수입/지출 구분, 카테고리 정보)
+        let titleText = `${DataManager.data.year}년 ${month}월 `;
+        if (type === 'income') {
+            titleText += '수입';
+        } else if (type === 'expense') {
+            titleText += '지출';
+        } else {
+            titleText += '내역';
+        }
+        
+        if (category) {
+            titleText += ` - ${category}`;
+            if (subcategory) {
+                titleText += ` > ${subcategory}`;
+            }
+        }
+        
+        // 팝업 내용 생성
+        popup.innerHTML = `
+            <div class="popup-content" style="max-width: 1000px; width: 80%;">
+                <div class="popup-header">
+                    <h3>${titleText}</h3>
+                    <button id="close-popup" class="close-popup-btn">&times;</button>
+                </div>
+                <div class="popup-body">
+                    <div class="mb-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            ${type === 'income' ? 
+                              `<strong class="text-primary">수입 합계: ${Utils.number.formatCurrency(totalIncome)}</strong>` :
+                              type === 'expense' ? 
+                              `<strong class="text-danger">지출 합계: ${Utils.number.formatCurrency(totalExpense)}</strong>` :
+                              `<div>
+                                <strong class="text-primary">수입 합계: ${Utils.number.formatCurrency(totalIncome)}</strong><br>
+                                <strong class="text-danger">지출 합계: ${Utils.number.formatCurrency(totalExpense)}</strong><br>
+                                <strong class="${netClass}">순액: ${netPrefix}${Utils.number.formatCurrency(Math.abs(netAmount))}</strong>
+                              </div>`
+                            }
+                        </div>
+                        <span class="badge bg-primary">총 ${items.length}개 항목</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>날짜</th>
+                                    <th>금액</th>
+                                    <th>내용</th>
+                                    <th>분류</th>
+                                    <th>실입금</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${items.length > 0 ? items.map(item => {
+                                    const isIncome = item.isIncome;
+                                    const amountClass = isIncome ? 'text-primary' : 'text-danger';
+                                    const amountPrefix = isIncome ? '+' : '-';
+                                    const actualPaymentBadge = item.isActualPayment ? 
+                                        '<span class="badge bg-success">✓</span>' : 
+                                        '<span class="badge bg-secondary">✗</span>';
+                                    
+                                    return `
+                                        <tr>
+                                            <td>${item.date}</td>
+                                            <td class="${amountClass}">${amountPrefix}${Utils.number.formatCurrency(item.amount)}</td>
+                                            <td>${item.description}</td>
+                                            <td>${item.categoryName}${item.subCategoryName ? ` > ${item.subCategoryName}` : ''}</td>
+                                            <td class="text-center">${actualPaymentBadge}</td>
+                                        </tr>
+                                    `;
+                                }).join('') : '<tr><td colspan="5" class="text-center">항목이 없습니다.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(popup);
+        
+        // 팝업 닫기 버튼 이벤트
+        popup.querySelector('#close-popup').addEventListener('click', () => {
+            popup.remove();
+        });
+        
+        // ESC 키로 팝업 닫기
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                popup.remove();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+        
+        // 팝업 외부 클릭시 닫기
+        popup.addEventListener('click', (e) => {
+            if (e.target === popup) {
+                popup.remove();
+            }
+        });
+    },
+    
+    // 월별 항목 가져오기
+    getMonthlyItems(month, type, category, subcategory) {
+        console.log('getMonthlyItems 호출됨:', { month, type, category, subcategory });
+        
+        const year = DataManager.data.year;
+        const monthStr = month.toString().padStart(2, '0');
+        const yearMonth = `${year}-${monthStr}`;
+        console.log('검색할 년월:', yearMonth);
+        
+        // DataManager 데이터 상태 확인
+        console.log('DataManager 데이터:', {
+            year: DataManager.data.year,
+            categoriesMain: DataManager.data.categories.main.length,
+            categoriesSub: DataManager.data.categories.sub.length,
+            oneTimeExpenses: DataManager.data.oneTimeExpenses.length,
+            recurringExpenses: DataManager.data.recurringExpenses.length
+        });
+        
+        const result = [];
+        
+        // 일회성 지출 항목 처리
+        console.log('총 oneTimeExpenses 항목 수:', DataManager.data.oneTimeExpenses.length);
+        
+        DataManager.data.oneTimeExpenses.forEach((expense, index) => {
+            // 해당 월의 지출만 필터링
+            if (expense.date && expense.date.startsWith(yearMonth)) {
+                console.log(`항목 #${index} 일치하는 날짜:`, expense.date, expense);
+                
+                // 실입금 항목만 필터링
+                if (expense.isActualPayment !== true) {
+                    console.log(`항목 #${index} 실입금 아님, 제외`);
+                    return;
+                }
+                
+                // 대분류 정보 찾기
+                const mainCategory = DataManager.data.categories.main.find(c => c.code === expense.mainCategory);
+                const isIncome = mainCategory?.type === 'income';
+                
+                console.log(`항목 #${index} 대분류:`, mainCategory?.name, '수입여부:', isIncome);
+                
+                // 수입/지출 타입 필터링
+                if ((type === 'income' && !isIncome) || (type === 'expense' && isIncome)) {
+                    console.log(`항목 #${index} 타입 불일치로 제외. 요청:`, type, '실제:', isIncome ? 'income' : 'expense');
+                    return;
+                }
+                
+                // 카테고리 필터링
+                if (category && mainCategory?.name !== category) {
+                    console.log(`항목 #${index} 카테고리 불일치로 제외. 요청:`, category, '실제:', mainCategory?.name);
+                    return;
+                }
+                
+                // 중분류 정보 찾기
+                const subCategoryObj = DataManager.data.categories.sub.find(c => c.code === expense.subCategory);
+                
+                // 서브카테고리 필터링
+                if (subcategory && subCategoryObj?.name !== subcategory) {
+                    console.log(`항목 #${index} 서브카테고리 불일치로 제외. 요청:`, subcategory, '실제:', subCategoryObj?.name);
+                    return;
+                }
+                
+                console.log(`항목 #${index} 모든 조건 충족, 결과에 추가함`);
+                
+                // 지출/수입 항목 추가
+                result.push({
+                    id: expense.id,
+                    date: expense.date,
+                    description: expense.description,
+                    amount: expense.amount,
+                    categoryName: mainCategory?.name || '미분류',
+                    subCategoryName: subCategoryObj?.name || '',
+                    isIncome: isIncome,
+                    isActualPayment: expense.isActualPayment === true
+                });
+            }
+        });
+        
+        // 날짜 기준 정렬
+        result.sort((a, b) => new Date(a.date) - new Date(b.date));
+        console.log('최종 결과 항목 수:', result.length);
+        
+        return result;
     },
     
     // 카테고리별 데이터 수집

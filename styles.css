@@ -566,4 +566,195 @@ button:hover {
     font-size: 0.9rem;
     min-width: 150px;
     white-space: nowrap;
+}
+
+.expense-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.popup-content {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    padding: 0;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.popup-header {
+    background-color: #f5f5f5;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.popup-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.close-popup-btn {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+}
+
+.close-popup-btn:hover {
+    background-color: #eee;
+    color: #333;
+}
+
+.popup-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.clickable-amount {
+    transition: background-color 0.2s;
+    position: relative;
+    z-index: 10;
+}
+
+.clickable-amount:hover {
+    background-color: rgba(0, 123, 255, 0.1) !important;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(0, 123, 255, 0.3);
+}
+
+/* 클릭 가능한 셀 시각적 표시 */
+.finance-clickable {
+    position: relative;
+}
+
+.finance-clickable::after {
+    content: "";
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: rgba(0, 123, 255, 0.6);
+}
+
+/* 페이징 관련 스타일 */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 10px;
+    background-color: #f8f9fa;
+    border-radius: 30px;
+    padding: 5px 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-button {
+    border: none;
+    background-color: transparent;
+    color: #495057;
+    font-weight: 500;
+    padding: 6px 12px;
+    margin: 0 2px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+}
+
+.pagination-button:hover {
+    background-color: #e7f1ff;
+    color: #0069d9;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+.pagination-button:active {
+    transform: scale(0.97);
+}
+
+.pagination-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    background-color: #f1f1f1;
+    color: #adb5bd;
+}
+
+.pagination-button i {
+    font-size: 0.9rem;
+    margin: 0 2px;
+}
+
+.page-info {
+    background-color: #fff;
+    border-radius: 20px;
+    padding: 5px 10px;
+    margin: 0 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: #495057;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    min-width: auto;
+    position: relative;
+    font-size: 0.9rem;
+}
+
+.page-info::before {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background-color: #e7f1ff;
+    border-radius: 2px;
+}
+
+.page-info span {
+    margin: 0 2px;
+}
+
+/* 페이지 전환 애니메이션 효과 */
+#expense-detail-list tbody {
+    transition: opacity 0.3s ease;
+}
+
+.loading-page {
+    opacity: 0.5;
+}
+
+.page-loaded {
+    opacity: 1;
+}
+
+.small.text-muted {
+    font-size: 0.75rem;
+    color: #6c757d !important;
 } 

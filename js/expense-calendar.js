@@ -362,6 +362,10 @@ const ExpenseCalendar = {
             existingPopup.remove();
         }
         
+        // 페이징 설정
+        const itemsPerPage = 10; // 페이지당 항목 수
+        let currentPage = 1;
+        
         // 팝업 컨테이너 생성
         const popup = document.createElement('div');
         popup.id = 'expense-detail-popup';
@@ -404,6 +408,22 @@ const ExpenseCalendar = {
                     </ul>
                     <div class="tab-content" id="expenseDetailTabContent">
                         <div class="tab-pane fade show active" id="detail-content" role="tabpanel" aria-labelledby="detail-tab">
+                            <div class="d-flex justify-content-between align-items-center my-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        <span class="badge bg-primary">총 ${expenses.length}개 항목</span>
+                                        <span class="badge bg-primary">수입: ${Utils.number.formatCurrency(totalIncome)}</span>
+                                        <span class="badge bg-danger">지출: ${Utils.number.formatCurrency(totalExpense)}</span>
+                                        <span class="badge ${netAmountClass}">순액: ${netAmountPrefix}${Utils.number.formatCurrency(absNetAmount)}</span>
+                                    </div>
+                                    <button id="prevPage" class="pagination-button"><i class="bi bi-chevron-left"></i> 이전</button>
+                                    <div class="page-info">
+                                        <span id="currentPageDisplay">1</span> / <span id="totalPagesDisplay">1</span>
+                                        <span class="small text-muted ms-2">(${Math.min(1, expenses.length)}-${Math.min(itemsPerPage, expenses.length)}/${expenses.length}개)</span>
+                                    </div>
+                                    <button id="nextPage" class="pagination-button">다음 <i class="bi bi-chevron-right"></i></button>
+                                </div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-hover" id="expense-detail-list" style="width: 100%; table-layout: fixed;">
                                     <thead>
@@ -524,21 +544,6 @@ const ExpenseCalendar = {
             initialBalance = monthlyBalanceData[month-2].finalBalance;
         }
         
-        // 초기 잔액 행 추가
-        const initialBalanceRow = document.createElement('tr');
-        initialBalanceRow.classList.add('table-light');
-        initialBalanceRow.innerHTML = `
-            <td colspan="3" class="text-start" style="font-size: 14px;"><strong>이전 잔액</strong></td>
-            <td class="text-end"></td>
-            <td></td>
-            <td class="text-end" style="font-size: 14px;"><strong>${Utils.number.formatCurrency(initialBalance)}</strong></td>
-            <td></td>
-        `;
-        tbody.appendChild(initialBalanceRow);
-        
-        // 잔액 계산을 위한 변수
-        let runningBalance = initialBalance;
-        
         // 날짜순으로 정렬
         expenses.sort((a, b) => {
             const dateA = new Date(a.date);
@@ -546,213 +551,219 @@ const ExpenseCalendar = {
             return dateA - dateB;
         });
         
-        // 지출/수입 항목 추가
-        expenses.forEach((expense, index) => {
-            const tr = document.createElement('tr');
+        // 페이징 처리 함수
+        const renderExpenseTable = () => {
+            const tbody = popup.querySelector('#expense-detail-list tbody');
             
-            // 수입/지출에 따라 스타일 변경
-            const amountClass = expense.isIncome ? 'text-primary' : 'text-danger';
-            const amountPrefix = expense.isIncome ? '+' : '-';
+            // 페이지 로딩 효과 적용
+            tbody.classList.add('loading-page');
             
-            // 잔액 계산
-            if (expense.isIncome) {
-                runningBalance += expense.amount;
-            } else {
-                runningBalance -= expense.amount;
-            }
-            
-            // 잔액 표시 스타일
-            const balanceClass = runningBalance >= 0 ? 'text-primary' : 'text-danger';
-            const balancePrefix = runningBalance >= 0 ? '+' : '';
-            
-            // 날짜 형식 간소화 - YYYY-MM-DD 대신 DD만 표시 (같은 월이므로)
-            const fullDateParts = expense.date.split('-');
-            const dayOnly = fullDateParts[2]; // 일자만 추출
-            
-            // 반복 지출인 경우 표시 (매일/매월)
-            let recurringBadge = '';
-            if (expense.isRecurring) {
-                recurringBadge = '<span class="badge bg-primary">반복</span> ';
-            }
-            
-            // 분류 정보 가져오기
-            let categoryInfo = '';
-            if (expense.mainCategoryName) {
-                categoryInfo = expense.mainCategoryName;
+            // 약간의 지연 후 내용 업데이트 (부드러운 전환 효과 위해)
+            setTimeout(() => {
+                // 기존 테이블 내용 초기화
+                tbody.innerHTML = '';
                 
-                // 중분류 정보가 있으면 추가
-                if (expense.subCategoryName) {
-                    categoryInfo += ` > ${expense.subCategoryName}`;
-                }
-            } else {
-                categoryInfo = '미분류';
-            }
-            
-            // 실입금 여부 표시
-            let actualPaymentBadge = '';
-            if (expense.isActualPayment) {
-                actualPaymentBadge = '<span class="badge bg-success actual-payment-badge" data-id="' + expense.id + '" style="font-size: 14px; padding: 5px 8px; cursor: pointer;" title="클릭하여 실입금 여부를 변경합니다">✓</span>';
-            } else {
-                actualPaymentBadge = '<span class="badge bg-secondary actual-payment-badge" data-id="' + expense.id + '" style="font-size: 14px; padding: 5px 8px; cursor: pointer;" title="클릭하여 실입금 여부를 변경합니다">✗</span>';
-            }
-            
-            tr.innerHTML = `
-                <td style="font-size: 14px;">${dayOnly}일</td>
-                <td class="text-truncate" style="max-width: 250px; font-size: 14px;" title="${expense.description}">${recurringBadge}${expense.description}</td>
-                <td class="text-truncate" style="max-width: 200px; font-size: 14px;" title="${categoryInfo}">${categoryInfo}</td>
-                <td class="text-end ${amountClass}" style="font-size: 14px;">${amountPrefix}${Utils.number.formatCurrency(expense.amount)}</td>
-                <td class="text-center">${actualPaymentBadge}</td>
-                <td class="text-end ${balanceClass}" style="font-size: 14px;">${balancePrefix}${Utils.number.formatCurrency(runningBalance)}</td>
-                <td class="text-center">
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-primary edit-expense-btn" data-id="${expense.id}" style="padding: 0.2rem 0.4rem; font-size: 12px; margin-right: 3px;">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger delete-expense-btn" data-id="${expense.id}" style="padding: 0.2rem 0.4rem; font-size: 12px;">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            `;
-            
-            tbody.appendChild(tr);
-            
-            // 편집 버튼 이벤트 추가
-            tr.querySelector('.edit-expense-btn').addEventListener('click', () => {
-                // 모든 항목에 대해 수정 허용 (고유 ID 전달)
-                console.log('편집 버튼 클릭, 항목 ID:', expense.id);
-                this.showEditExpenseForm(expense.id, expense, month);
-            });
-            
-            // 삭제 버튼 이벤트 추가
-            tr.querySelector('.delete-expense-btn').addEventListener('click', () => {
-                console.log('삭제 버튼 클릭, 항목 ID:', expense.id);
+                // 초기 잔액 행 추가
+                const initialBalanceRow = document.createElement('tr');
+                initialBalanceRow.classList.add('table-light');
+                initialBalanceRow.innerHTML = `
+                    <td colspan="3" class="text-start" style="font-size: 14px;"><strong>이전 잔액</strong></td>
+                    <td class="text-end"></td>
+                    <td></td>
+                    <td class="text-end" style="font-size: 14px;"><strong>${Utils.number.formatCurrency(initialBalance)}</strong></td>
+                    <td></td>
+                `;
+                tbody.appendChild(initialBalanceRow);
                 
-                // 삭제 확인
-                if (confirm('정말로 이 항목을 삭제하시겠습니까?')) {
-                    try {
-                        // 항목 삭제 (고유 ID 사용)
-                        DataManager.removeOneTimeExpense(expense.id);
-                        
-                        // UI 갱신을 위한 이벤트 발생
-                        document.dispatchEvent(new CustomEvent('expenses-updated'));
-                        
-                        // 상세보기 팝업 갱신
-                        const updatedExpenses = this.getMonthlyExpenses(DataManager.data.year, month);
-                        
-                        // 기존 팝업 닫기
-                        const existingPopup = document.getElementById('expense-detail-popup');
-                        if (existingPopup) {
-                            existingPopup.remove();
-                        }
-                        
-                        // 새로 표시 (삭제 후 항목이 있을 경우에만)
-                        if (updatedExpenses.length > 0) {
-                            this.showExpenseDetail(month, updatedExpenses);
+                // 잔액 계산을 위한 변수
+                let runningBalance = initialBalance;
+                
+                // 현재 페이지에 표시할 항목 범위 계산
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = Math.min(startIndex + itemsPerPage, expenses.length);
+                
+                // 해당 페이지 범위의 항목만 표시
+                for (let i = 0; i < expenses.length; i++) {
+                    // 모든 항목에 대해 잔액을 계산하지만, 현재 페이지 항목만 표시
+                    const expense = expenses[i];
+                    
+                    // 대분류 정보 찾기
+                    const mainCategory = DataManager.data.categories.main.find(c => c.code === expense.mainCategory) || { name: '미분류' };
+                    
+                    // 중분류 정보 찾기
+                    const subCategory = DataManager.data.categories.sub.find(c => c.code === expense.subCategory) || { name: '' };
+                    
+                    // 잔액 계산
+                    if (expense.isActualPayment) {
+                        if (mainCategory.type === 'income') {
+                            runningBalance += expense.amount;
                         } else {
-                            // 달력 갱신
-                            this.renderCalendar();
+                            runningBalance -= expense.amount;
                         }
-                    } catch (error) {
-                        console.error('항목 삭제 오류:', error);
-                        alert('항목 삭제 중 오류가 발생했습니다: ' + error.message);
+                    }
+                    
+                    // 현재 페이지 범위에 있는 항목만 테이블에 추가
+                    if (i >= startIndex && i < endIndex) {
+                        const tr = document.createElement('tr');
+                        
+                        // 수입/지출에 따라 스타일 적용
+                        const amountClass = mainCategory.type === 'income' ? 'text-primary' : 'text-danger';
+                        const amountPrefix = mainCategory.type === 'income' ? '+' : '-';
+                        
+                        // 반복 지출 여부에 따른 배지 추가
+                        let recurringBadge = '';
+                        if (expense.recurringId) {
+                            recurringBadge = '<span class="badge bg-info ms-1">반복</span>';
+                        }
+                        
+                        // 실제 입금 여부 배지
+                        const actualPaymentBadge = expense.isActualPayment ? 
+                            '<span class="badge bg-success">✓</span>' : 
+                            '<span class="badge bg-secondary">✗</span>';
+                        
+                        tr.innerHTML = `
+                            <td style="font-size: 14px;">${expense.date}</td>
+                            <td style="font-size: 14px; word-break: break-all; overflow-wrap: break-word;">${expense.description}${recurringBadge}</td>
+                            <td style="font-size: 14px;">${mainCategory.name} > ${subCategory.name}</td>
+                            <td class="text-end ${amountClass}" style="font-size: 14px;">${amountPrefix}${Utils.number.formatCurrency(expense.amount)}</td>
+                            <td class="text-center">${actualPaymentBadge}</td>
+                            <td class="text-end" style="font-size: 14px;">${Utils.number.formatCurrency(runningBalance)}</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary btn-sm edit-expense-btn" data-id="${expense.id}">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm delete-expense-btn" data-id="${expense.id}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        
+                        tbody.appendChild(tr);
                     }
                 }
-            });
-            
-            // 실입금 뱃지 클릭 이벤트 추가
-            const actualPaymentBadgeEl = tr.querySelector('.actual-payment-badge');
-            if (actualPaymentBadgeEl) {
-                actualPaymentBadgeEl.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    
-                    // 데이터 속성에서 정보 가져오기
-                    const expenseId = actualPaymentBadgeEl.getAttribute('data-id');
-                    
-                    console.log('클릭한 항목 ID:', expenseId);
-                    
-                    try {
-                        // 토글 함수 직접 호출 (고유 ID 사용)
-                        const updatedExpense = DataManager.toggleActualPayment(expenseId);
-                        
-                        if (updatedExpense) {
-                            console.log('실입금 토글 성공:', updatedExpense);
-                            
-                            // UI 갱신을 위한 이벤트 발생
-                            document.dispatchEvent(new CustomEvent('expenses-updated'));
-                            
-                            // 상세보기 팝업 갱신
-                            const updatedExpenses = this.getMonthlyExpenses(DataManager.data.year, month);
-                            
-                            // 기존 팝업 닫기
-                            const existingPopup = document.getElementById('expense-detail-popup');
-                            if (existingPopup) {
-                                existingPopup.remove();
-                            }
-                            
-                            // 새로 표시
-                            this.showExpenseDetail(month, updatedExpenses);
-                            
-                            return;
-                        }
-                        
-                        throw new Error('항목을 업데이트할 수 없습니다.');
-                    } catch (error) {
-                        console.error('실입금 변경 오류:', error);
-                        alert('실입금 여부 변경 중 오류가 발생했습니다: ' + error.message);
+                
+                // 최종 잔액 행 추가
+                const finalBalanceRow = document.createElement('tr');
+                finalBalanceRow.classList.add('table-primary');
+                finalBalanceRow.innerHTML = `
+                    <td colspan="5" class="text-end" style="font-size: 14px;"><strong>최종 잔액</strong></td>
+                    <td class="text-end" style="font-size: 14px;"><strong>${Utils.number.formatCurrency(runningBalance)}</strong></td>
+                    <td></td>
+                `;
+                tbody.appendChild(finalBalanceRow);
+                
+                // 페이징 표시 업데이트
+                const totalPages = Math.ceil(expenses.length / itemsPerPage);
+                const currentPageDisplay = popup.querySelector('#currentPageDisplay');
+                const totalPagesDisplay = popup.querySelector('#totalPagesDisplay');
+                const prevBtn = popup.querySelector('#prevPage');
+                const nextBtn = popup.querySelector('#nextPage');
+                
+                currentPageDisplay.textContent = currentPage;
+                totalPagesDisplay.textContent = totalPages;
+                
+                // 현재 표시 중인 아이템 범위 계산
+                const startItem = expenses.length > 0 ? startIndex + 1 : 0;
+                const endItem = Math.min(endIndex, expenses.length);
+                
+                // 페이지 상태 업데이트
+                const pageInfoContainer = popup.querySelector('.page-info');
+                pageInfoContainer.innerHTML = `
+                    <span id="currentPageDisplay">${currentPage}</span>
+                    <span>/</span>
+                    <span id="totalPagesDisplay">${totalPages}</span>
+                    <span class="small text-muted ms-2">(${startItem}-${endItem}/${expenses.length}개)</span>
+                `;
+                
+                prevBtn.disabled = currentPage === 1;
+                nextBtn.disabled = currentPage === totalPages || expenses.length === 0;
+                
+                // 수정 및 삭제 버튼 클릭 이벤트 추가
+                setupItemActionButtons(popup);
+                
+                // 페이지 로딩 완료 효과
+                tbody.classList.remove('loading-page');
+                tbody.classList.add('page-loaded');
+            }, 150); // 150ms 지연 - 시각적 효과용
+        };
+        
+        // 항목별 액션 버튼 설정 함수
+        const setupItemActionButtons = (popupElem) => {
+            // 수정 버튼 클릭 이벤트
+            popupElem.querySelectorAll('.edit-expense-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const expenseId = parseInt(btn.dataset.id);
+                    const expense = expenses.find(e => e.id === expenseId);
+                    if (expense) {
+                        this.showEditExpenseForm(expenseId, expense, month);
+                        popup.remove(); // 현재 팝업 닫기
                     }
                 });
+            });
+            
+            // 삭제 버튼 클릭 이벤트
+            popupElem.querySelectorAll('.delete-expense-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const expenseId = parseInt(btn.dataset.id);
+                    
+                    if (confirm('정말로 이 항목을 삭제하시겠습니까?')) {
+                        // 항목 삭제
+                        DataManager.removeOneTimeExpense(expenseId);
+                        
+                        // 삭제 후 팝업 다시 열기
+                        popup.remove();
+                        const updatedExpenses = this.getMonthlyExpenses(DataManager.data.year, month);
+                        this.showExpenseDetail(month, updatedExpenses);
+                    }
+                });
+            });
+        };
+        
+        // 페이지 이동 버튼 이벤트 설정
+        const prevPageBtn = popup.querySelector('#prevPage');
+        const nextPageBtn = popup.querySelector('#nextPage');
+        
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderExpenseTable();
             }
         });
         
-        // 최종 잔액 행 추가
-        const finalBalanceRow = document.createElement('tr');
-        finalBalanceRow.classList.add('table-light');
+        nextPageBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(expenses.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderExpenseTable();
+            }
+        });
         
-        const finalBalanceClass = runningBalance >= 0 ? 'text-primary' : 'text-danger';
-        const finalBalancePrefix = runningBalance >= 0 ? '+' : '';
+        // 키보드 페이지 이동 지원
+        popup.addEventListener('keydown', (e) => {
+            // 왼쪽 화살표 - 이전 페이지
+            if (e.key === 'ArrowLeft' && !prevPageBtn.disabled) {
+                prevPageBtn.click();
+            }
+            // 오른쪽 화살표 - 다음 페이지
+            else if (e.key === 'ArrowRight' && !nextPageBtn.disabled) {
+                nextPageBtn.click();
+            }
+        });
         
-        finalBalanceRow.innerHTML = `
-            <td colspan="3" class="text-end" style="font-size: 14px;"><strong>최종 잔액</strong></td>
-            <td class="text-end"></td>
-            <td></td>
-            <td class="text-end ${finalBalanceClass}" style="font-size: 14px;"><strong>${finalBalancePrefix}${Utils.number.formatCurrency(runningBalance)}</strong></td>
-            <td></td>
-        `;
-        tbody.appendChild(finalBalanceRow);
+        // 초기 테이블 렌더링
+        renderExpenseTable();
         
-        // 요약 탭 내용 채우기
-        const categorySummary = this.summarizeExpensesByCategory(expenses);
+        // 요약 탭 데이터 설정
+        const mainCategorySummary = popup.querySelector('#main-category-summary tbody');
+        const subCategorySummary = popup.querySelector('#sub-category-summary tbody');
         
-        // 1. 대분류별 요약
-        const mainCategoryTbody = popup.querySelector('#main-category-summary tbody');
+        // 카테고리별 요약 계산
+        const summary = this.summarizeExpensesByCategory(expenses);
         
-        for (const categoryCode in categorySummary.mainCategories) {
-            const category = categorySummary.mainCategories[categoryCode];
-            const row = document.createElement('tr');
-            
-            // 금액 스타일 설정 (수입/지출에 따라)
-            const amountClass = category.isIncome ? 'text-primary' : 'text-danger';
-            const amountSign = category.isIncome ? '+' : '-';
-            
-            // 비율 계산
-            const totalAmount = category.isIncome ? categorySummary.totalIncome : categorySummary.totalExpense;
-            const percentage = totalAmount === 0 ? 0 : (category.amount / totalAmount * 100).toFixed(1);
-            
-            row.innerHTML = `
-                <td>${category.name}</td>
-                <td>${category.count}건</td>
-                <td class="${amountClass}">${amountSign}${Utils.number.formatCurrency(category.amount)}</td>
-                <td>${percentage}%</td>
-            `;
-            mainCategoryTbody.appendChild(row);
-        }
-        
-        // 2. 중분류별 요약
-        const subCategoryTbody = popup.querySelector('#sub-category-summary tbody');
-        
-        for (const categoryKey in categorySummary.subCategories) {
-            const category = categorySummary.subCategories[categoryKey];
+        // 대분류 요약 테이블 채우기
+        Object.values(summary.mainCategories).forEach(category => {
             const row = document.createElement('tr');
             
             // 금액 스타일 설정 (수입/지출에 따라)
@@ -760,13 +771,29 @@ const ExpenseCalendar = {
             const amountSign = category.isIncome ? '+' : '-';
             
             row.innerHTML = `
-                <td>${category.mainName}</td>
                 <td>${category.name}</td>
                 <td>${category.count}건</td>
                 <td class="${amountClass}">${amountSign}${Utils.number.formatCurrency(category.amount)}</td>
             `;
-            subCategoryTbody.appendChild(row);
-        }
+            mainCategorySummary.appendChild(row);
+        });
+        
+        // 중분류 요약 테이블 채우기
+        Object.values(summary.subCategories).forEach(subCategory => {
+            const row = document.createElement('tr');
+            
+            // 금액 스타일 설정 (수입/지출에 따라)
+            const amountClass = subCategory.isIncome ? 'text-primary' : 'text-danger';
+            const amountSign = subCategory.isIncome ? '+' : '-';
+            
+            row.innerHTML = `
+                <td>${subCategory.mainCategoryName}</td>
+                <td>${subCategory.name}</td>
+                <td>${subCategory.count}건</td>
+                <td class="${amountClass}">${amountSign}${Utils.number.formatCurrency(subCategory.amount)}</td>
+            `;
+            subCategorySummary.appendChild(row);
+        });
     },
     
     // 지출 수정 폼 표시
