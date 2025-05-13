@@ -71,7 +71,7 @@
         }
         
         .app-container {
-            max-width: 1200px;
+            max-width: 1500px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -396,8 +396,8 @@
         .popup-content {
             background-color: white;
             border-radius: 10px;
-            width: 90%;
-            max-width: 900px;
+            width: 95%;
+            max-width: 1400px;
             max-height: 90vh;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
@@ -415,7 +415,7 @@
         .popup-body {
             padding: 20px;
             overflow-y: auto;
-            max-height: calc(90vh - 60px);
+            max-height: calc(95vh - 60px);
         }
         
         .close-popup-btn {
@@ -761,40 +761,58 @@
         
         /* 금액 셀 스타일 개선 - 긴 숫자도 잘 표시되도록 */
         .finance-statement-table td.text-end {
-            font-size: 0.83rem; /* 숫자 셀의 글꼴 크기 약간 더 축소 */
-            padding-left: 2px;
-            padding-right: 2px;
+            font-size: 0.85rem; /* 숫자 셀의 글꼴 크기 약간 키움 */
+            padding-left: 4px;
+            padding-right: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             text-align: right;
+            min-width: 130px; /* 최소 너비 설정 */
         }
         
-        /* 금액 표시가 서로 잘 정렬되도록 개선 */
-        .finance-statement-table td.text-end.finance-positive,
-        .finance-statement-table td.text-end.finance-negative {
-            font-weight: 600;
-            letter-spacing: -0.5px; /* 글자 간격 약간 좁게 */
+        /* 테이블 셀 내 긴 텍스트 처리 개선 */
+        .table td, .table th {
+            vertical-align: middle;
+            padding: 10px 8px;
+            word-wrap: break-word;
+            min-width: 120px; /* 기본 최소 너비 설정 */
         }
         
+        /* 내용 셀 너비 확장 */
+        .table td:nth-child(3) {
+            min-width: 180px; /* 내용 칼럼은 더 넓게 */
+        }
+        
+        /* 분류 셀 너비 확장 */
+        .table td:nth-child(4) {
+            min-width: 200px; /* 분류 칼럼은 더 넓게 */
+        }
+        
+        /* 자금수지 테이블 열 너비 조정 */
         .finance-statement-table th:nth-child(1) {
-            width: 250px; /* 구분 열 넓이 증가 */
+            width: 300px; /* 구분 열 넓이 증가 */
             z-index: 3;
         }
         
         .finance-statement-table th:nth-child(2) {
-            width: 150px; /* 합계 열 */
+            width: 180px; /* 합계 열 */
             z-index: 2;
         }
         
         .finance-statement-table th:nth-child(n+3) {
-            width: 150px; /* 월별 열 너비 더 증가 (120px → 150px) */
+            width: 180px; /* 월별 열 너비 더 증가 */
             z-index: 1;
         }
         
         .finance-statement-table td:nth-child(n+3) {
-            width: 150px; /* 월별 셀 너비 명시적 설정 */
-            min-width: 150px; /* 최소 너비 지정 */
+            width: 180px; /* 월별 셀 너비 명시적 설정 */
+            min-width: 180px; /* 최소 너비 지정 */
+        }
+        
+        .finance-second-col {
+            left: 300px; /* 첫 번째 열 넓이와 같게 설정 */
+            z-index: 1;
         }
         
         .finance-sticky-col {
@@ -807,11 +825,6 @@
         .finance-first-col {
             left: 0;
             z-index: 2;
-        }
-        
-        .finance-second-col {
-            left: 250px; /* 첫 번째 열 넓이와 같게 설정 */
-            z-index: 1;
         }
         
         /* 행 유형별 배경색 */
@@ -937,6 +950,61 @@
         
         .current-theme {
             font-weight: 500;
+        }
+        
+        /* 상세 내역 테이블 셀 사이즈 조정 */
+        #expense-detail-list th, 
+        #expense-detail-list td {
+            padding: 12px 15px;
+            vertical-align: middle;
+        }
+        
+        /* 상세 내역 테이블 열 너비 조정 */
+        #expense-detail-list th:nth-child(1),
+        #expense-detail-list td:nth-child(1) {
+            min-width: 130px; /* 날짜 */
+        }
+        
+        #expense-detail-list th:nth-child(2),
+        #expense-detail-list td:nth-child(2) {
+            min-width: 250px; /* 내용 */
+            max-width: 350px;
+        }
+        
+        #expense-detail-list th:nth-child(3),
+        #expense-detail-list td:nth-child(3) {
+            min-width: 300px; /* 분류 */
+            max-width: 400px;
+        }
+        
+        #expense-detail-list th:nth-child(4),
+        #expense-detail-list td:nth-child(4) {
+            min-width: 150px; /* 금액 */
+            text-align: right;
+        }
+        
+        #expense-detail-list th:nth-child(5),
+        #expense-detail-list td:nth-child(5) {
+            min-width: 150px; /* 잔액 */
+            text-align: right;
+        }
+        
+        /* 테이블 스크롤 영역 */
+        .table-responsive {
+            overflow-x: auto;
+            max-height: calc(80vh - 120px);
+        }
+        
+        /* 모바일 환경에서도 테이블이 잘 보이도록 조정 */
+        @media (max-width: 768px) {
+            .popup-content {
+                width: 98%;
+                margin: 10px;
+            }
+            
+            .table-responsive {
+                max-height: calc(80vh - 150px);
+            }
         }
     </style>
 </head>
@@ -1073,6 +1141,13 @@
                             <h3>반복 지출 등록</h3>
                             <form id="add-recurring-expense-form" class="mb-4">
                                 <div class="mb-3">
+                                    <label for="recurring-frequency" class="form-label">반복 주기:</label>
+                                    <select id="recurring-frequency" class="form-control">
+                                        <option value="monthly">매월</option>
+                                        <option value="daily">매일</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="recurring-day-container">
                                     <label for="recurring-day" class="form-label">지출일:</label>
                                     <input type="number" id="recurring-day" min="1" max="31" class="form-control" placeholder="1-31">
                                 </div>
@@ -1093,12 +1168,30 @@
                                     <select id="recurring-sub-category" class="form-control sub-category-selector"></select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="recurring-start-date" class="form-label">시작월:</label>
-                                    <input type="month" id="recurring-start-date" class="form-control">
+                                    <label for="recurring-start-date" class="form-label">시작일:</label>
+                                    <input type="date" id="recurring-start-date" class="form-control">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="recurring-end-date" class="form-label">종료월 (선택):</label>
-                                    <input type="month" id="recurring-end-date" class="form-control">
+                                    <label for="recurring-end-date" class="form-label">종료일 (선택):</label>
+                                    <input type="date" id="recurring-end-date" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" id="recurring-skip-weekends" class="form-check-input">
+                                        <label for="recurring-skip-weekends" class="form-check-label">주말 제외</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" id="recurring-skip-holidays" class="form-check-input">
+                                        <label for="recurring-skip-holidays" class="form-check-label">공휴일 제외</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" id="recurring-actual-payment" class="form-check-input">
+                                        <label for="recurring-actual-payment" class="form-check-label">실입금 항목</label>
+                                    </div>
                                 </div>
                                 <button type="submit" class="btn btn-primary">등록</button>
                             </form>
@@ -1136,6 +1229,12 @@
                                 <div class="mb-3">
                                     <label for="one-time-sub-category" class="form-label">중분류:</label>
                                     <select id="one-time-sub-category" class="form-control sub-category-selector"></select>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" id="one-time-actual-payment" class="form-check-input">
+                                        <label for="one-time-actual-payment" class="form-check-label">실입금 항목</label>
+                                    </div>
                                 </div>
                                 <button type="submit" class="btn btn-primary">등록</button>
                             </form>

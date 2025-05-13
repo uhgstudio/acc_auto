@@ -93,7 +93,7 @@ const ExpenseManager = {
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>지출일</th>
+                        <th>반복 주기</th>
                         <th>금액</th>
                         <th>내용</th>
                         <th>분류</th>
@@ -118,9 +118,20 @@ const ExpenseManager = {
             const amountClass = isIncome ? 'text-primary' : 'text-danger';
             const amountPrefix = isIncome ? '+' : '-';
             
+            // 반복 주기에 따른 표시
+            const frequencyDisplay = expense.frequency === 'daily' 
+                ? '매일' 
+                : `매월 ${expense.day}일`;
+            
+            // 주말/공휴일 제외 옵션 표시
+            let optionsDisplay = [];
+            if (expense.skipWeekends) optionsDisplay.push('주말 제외');
+            if (expense.skipHolidays) optionsDisplay.push('공휴일 제외');
+            const optionsText = optionsDisplay.length > 0 ? ` (${optionsDisplay.join(', ')})` : '';
+            
             html += `
                 <tr>
-                    <td>매월 ${expense.day}일</td>
+                    <td>${frequencyDisplay}${optionsText}</td>
                     <td class="${amountClass}">${amountPrefix}${Utils.number.formatCurrency(expense.amount)}</td>
                     <td>${expense.description}</td>
                     <td>${mainCategoryName}${subCategoryName ? ` > ${subCategoryName}` : ''}</td>
@@ -253,12 +264,27 @@ const ExpenseManager = {
     
     // 지출 관련 이벤트 리스너 설정
     setupExpenseEventListeners() {
+        // 반복 주기 변경 시 UI 업데이트
+        const recurringFrequency = document.getElementById('recurring-frequency');
+        const recurringDayContainer = document.getElementById('recurring-day-container');
+        
+        if (recurringFrequency && recurringDayContainer) {
+            recurringFrequency.addEventListener('change', () => {
+                if (recurringFrequency.value === 'daily') {
+                    recurringDayContainer.style.display = 'none';
+                } else {
+                    recurringDayContainer.style.display = 'block';
+                }
+            });
+        }
+        
         // 반복 지출 추가 폼 이벤트
         const addRecurringExpenseForm = document.getElementById('add-recurring-expense-form');
         if (addRecurringExpenseForm) {
             addRecurringExpenseForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 
+                const frequency = document.getElementById('recurring-frequency').value;
                 const day = document.getElementById('recurring-day').value;
                 const amount = document.getElementById('recurring-amount').value;
                 const description = document.getElementById('recurring-description').value;
@@ -266,16 +292,28 @@ const ExpenseManager = {
                 const endDate = document.getElementById('recurring-end-date').value || null;
                 const mainCategory = document.getElementById('recurring-main-category').value;
                 const subCategory = document.getElementById('recurring-sub-category').value;
+                const skipWeekends = document.getElementById('recurring-skip-weekends').checked;
+                const skipHolidays = document.getElementById('recurring-skip-holidays').checked;
+                const isActualPayment = document.getElementById('recurring-actual-payment').checked;
                 
-                if (day && amount && description && startDate && mainCategory) {
+                // 필수 입력 검증 (매월 주기일 때만 day 필수)
+                if (
+                    amount && 
+                    description && 
+                    startDate && 
+                    mainCategory && 
+                    (frequency === 'daily' || (frequency === 'monthly' && day))
+                ) {
                     try {
-                        DataManager.addRecurringExpense(day, amount, description, startDate, endDate, mainCategory, subCategory);
+                        DataManager.addRecurringExpense(frequency, day, amount, description, startDate, endDate, mainCategory, subCategory, skipWeekends, skipHolidays, isActualPayment);
                         
                         // 입력 필드 초기화
                         document.getElementById('recurring-day').value = '';
                         document.getElementById('recurring-amount').value = '';
                         document.getElementById('recurring-description').value = '';
                         document.getElementById('recurring-end-date').value = '';
+                        document.getElementById('recurring-skip-weekends').checked = false;
+                        document.getElementById('recurring-skip-holidays').checked = false;
                         
                         // 목록 갱신
                         this.renderRecurringExpenses();
@@ -302,10 +340,11 @@ const ExpenseManager = {
                 const description = document.getElementById('one-time-description').value;
                 const mainCategory = document.getElementById('one-time-main-category').value;
                 const subCategory = document.getElementById('one-time-sub-category').value;
+                const isActualPayment = document.getElementById('one-time-actual-payment').checked;
                 
                 if (date && amount && description && mainCategory) {
                     try {
-                        DataManager.addOneTimeExpense(date, amount, description, mainCategory, subCategory);
+                        DataManager.addOneTimeExpense(date, amount, description, mainCategory, subCategory, isActualPayment);
                         
                         // 입력 필드 초기화
                         document.getElementById('one-time-amount').value = '';

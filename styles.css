@@ -12,7 +12,7 @@ body {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1500px;
     margin: 0 auto;
     padding: 20px;
 }
@@ -459,4 +459,111 @@ button:hover {
 
 .summary-section .section-header {
     background-color: #e8f5e9; /* 연한 녹색 */
+}
+
+/* 반복 주기 강조 표시 */
+.highlight-row {
+    background-color: #ffffa0 !important;
+    transition: background-color 0.5s ease;
+}
+
+/* 매일 반복 항목 표시 */
+.daily-recurring-badge {
+    background-color: #8bc34a;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 5px;
+    border-radius: 10px;
+    margin-left: 5px;
+}
+
+/* 상세 내역 테이블 셀 사이즈 조정 */
+#expense-detail-list th, 
+#expense-detail-list td {
+    padding: 12px 15px;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+/* 상세 내역 테이블 열 너비 조정 */
+#expense-detail-list th:nth-child(1),
+#expense-detail-list td:nth-child(1) {
+    min-width: 130px; /* 날짜 */
+}
+
+#expense-detail-list th:nth-child(2),
+#expense-detail-list td:nth-child(2) {
+    min-width: 300px; /* 내용 */
+    max-width: 400px;
+}
+
+#expense-detail-list th:nth-child(3),
+#expense-detail-list td:nth-child(3) {
+    min-width: 350px; /* 분류 */
+    max-width: 450px;
+}
+
+#expense-detail-list th:nth-child(4),
+#expense-detail-list td:nth-child(4) {
+    min-width: 150px; /* 금액 */
+    text-align: right;
+}
+
+#expense-detail-list th:nth-child(5),
+#expense-detail-list td:nth-child(5) {
+    min-width: 150px; /* 잔액 */
+    text-align: right;
+}
+
+/* 테이블 스크롤 영역 */
+.table-responsive {
+    overflow-x: auto;
+    max-height: calc(80vh - 120px);
+}
+
+/* 팝업 컨텐츠 최대 너비 확장 */
+.popup-content {
+    width: 1400px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    position: relative;
+}
+
+/* 자금수지 스타일 */
+.finance-container {
+    margin-bottom: 30px;
+}
+
+.finance-container .card {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 15px rgba(227,185,214,0.15);
+}
+
+.finance-container .card-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#finance-statement-table {
+    margin-bottom: 0;
+}
+
+#finance-statement-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    vertical-align: middle;
+    font-size: 0.9rem;
+    min-width: 150px;
+}
+
+#finance-statement-table td {
+    vertical-align: middle;
+    font-size: 0.9rem;
+    min-width: 150px;
+    white-space: nowrap;
 } 

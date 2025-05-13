@@ -317,7 +317,7 @@ const App = {
                 
                 // 반복 수입
                 DataManager.data.recurringExpenses.forEach(expense => {
-                    if (expense.subCategory === subCategory.code) {
+                    if (expense.subCategory === subCategory.code && expense.isActualPayment === true) {
                         if (expense.startDate) {
                             const startDate = new Date(expense.startDate + '-01');
                             let endDate;
@@ -349,7 +349,7 @@ const App = {
                 
                 // 일회성 수입
                 DataManager.data.oneTimeExpenses.forEach(expense => {
-                    if (expense.subCategory === subCategory.code) {
+                    if (expense.subCategory === subCategory.code && expense.isActualPayment === true) {
                         if (expense.date) {
                             const expenseDate = new Date(expense.date);
                             const expenseYear = expenseDate.getFullYear();
@@ -458,7 +458,7 @@ const App = {
                 
                 // 반복 지출
                 DataManager.data.recurringExpenses.forEach(expense => {
-                    if (expense.subCategory === subCategory.code) {
+                    if (expense.subCategory === subCategory.code && expense.isActualPayment === true) {
                         if (expense.startDate) {
                             const startDate = new Date(expense.startDate + '-01');
                             let endDate;
@@ -490,7 +490,7 @@ const App = {
                 
                 // 일회성 지출
                 DataManager.data.oneTimeExpenses.forEach(expense => {
-                    if (expense.subCategory === subCategory.code) {
+                    if (expense.subCategory === subCategory.code && expense.isActualPayment === true) {
                         if (expense.date) {
                             const expenseDate = new Date(expense.date);
                             const expenseYear = expenseDate.getFullYear();
@@ -587,7 +587,7 @@ const App = {
         
         // 반복 지출/수입 처리
         DataManager.data.recurringExpenses.forEach(expense => {
-            if (!expense.mainCategory) return;
+            if (!expense.mainCategory || expense.isActualPayment !== true) return;
             
             const mainCategoryCode = expense.mainCategory;
             if (!categories[mainCategoryCode]) return;
@@ -623,7 +623,7 @@ const App = {
         
         // 일회성 지출/수입 처리
         DataManager.data.oneTimeExpenses.forEach(expense => {
-            if (!expense.mainCategory) return;
+            if (!expense.mainCategory || expense.isActualPayment !== true) return;
             
             const mainCategoryCode = expense.mainCategory;
             if (!categories[mainCategoryCode]) return;

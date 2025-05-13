@@ -201,77 +201,98 @@ const ExpenseCalendar = {
         const monthStr = month.toString().padStart(2, '0');
         const yearMonth = `${yearStr}-${monthStr}`;
         
-        // 반복 지출 항목 처리
-        DataManager.data.recurringExpenses.forEach(expense => {
-            // 시작 날짜와 종료 날짜 확인
-            const isInDateRange = Utils.date.isDateInRange(
-                new Date(year, month - 1, 1),
-                expense.startDate,
-                expense.endDate
-            );
-            
-            if (isInDateRange) {
-                // 해당 월에 유효한 반복 지출
-                
-                // 지출일이 해당 월에 존재하는지 확인 (예: 31일은 일부 달에는 없음)
-                const lastDayOfMonth = new Date(year, month, 0).getDate();
-                const expenseDay = Math.min(expense.day, lastDayOfMonth);
-                
-                // 해당 날짜에 대한 Date 객체 생성
-                const expenseDate = new Date(year, month - 1, expenseDay);
-                
-                // 주말이나 공휴일인 경우 다음 영업일로 조정
-                let actualDate = expenseDate;
-                if (Utils.date.isWeekend(expenseDate) || Utils.date.isHoliday(expenseDate, DataManager.data.holidays)) {
-                    actualDate = Utils.date.getNextBusinessDay(expenseDate, DataManager.data.holidays);
-                }
-                
-                // 조정된 날짜가 해당 월에 있는지 확인
-                if (actualDate.getMonth() + 1 === month) {
-                    // 대분류 정보 찾기
-                    const mainCategory = DataManager.data.categories.main.find(c => c.code === expense.mainCategory);
-                    const isIncome = mainCategory?.type === 'income';
-                    
-                    expenses.push({
-                        date: Utils.date.formatDate(actualDate),
-                        amount: expense.amount,
-                        description: expense.description,
-                        mainCategory: expense.mainCategory,
-                        mainCategoryName: mainCategory?.name || '미분류',
-                        subCategory: expense.subCategory,
-                        isIncome: isIncome,
-                        isRecurring: true
-                    });
-                }
-            }
-        });
-        
         // 일회성 지출 항목 처리
-        DataManager.data.oneTimeExpenses.forEach(expense => {
-            if (expense.date.startsWith(yearMonth)) {
+        DataManager.data.oneTimeExpenses.forEach((expense, index) => {
+            // 해당 월의 지출만 필터링
+            if (expense.date && expense.date.startsWith(yearMonth)) {
                 // 대분류 정보 찾기
                 const mainCategory = DataManager.data.categories.main.find(c => c.code === expense.mainCategory);
                 const isIncome = mainCategory?.type === 'income';
                 
+                // 중분류 정보 찾기
+                const subCategory = DataManager.data.categories.sub.find(c => c.code === expense.subCategory);
+                
+                // 지출/수입 항목 추가
                 expenses.push({
+                    id: `onetime-${index}`,
                     date: expense.date,
-                    amount: expense.amount,
                     description: expense.description,
+                    amount: expense.amount,
                     mainCategory: expense.mainCategory,
-                    mainCategoryName: mainCategory?.name || '미분류',
+                    mainCategoryName: mainCategory?.name || '',
                     subCategory: expense.subCategory,
+                    subCategoryName: subCategory?.name || '',
                     isIncome: isIncome,
-                    isRecurring: false
+                    isRecurring: false,
+                    tags: expense.tags || [],
+                    memo: expense.memo || '',
+                    memo: expense.memo || ''
                 });
             }
         });
         
-        // 날짜순 정렬
-        expenses.sort((a, b) => {
-            return a.date.localeCompare(b.date);
+        // 반복 지출 항목 처리 (이제 생성된 데이터 활용)
+        DataManager.data.generatedExpenses.forEach((expense, index) => {
+            // 해당 월의 지출만 필터링
+            if (expense.date && expense.date.startsWith(yearMonth)) {
+                // 이미 필요한 정보가 모두 포함되어 있지만, ID 생성을 위해 index 추가
+                const generatedExpense = {
+                    ...expense,
+                    id: `generated-${index}`
+                };
+                
+                expenses.push(generatedExpense);
+            }
         });
         
+        // 날짜 기준 내림차순 정렬
+        expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
         return expenses;
+    },
+    
+    // 날짜가 지정된 범위 내에 있는지 확인하는 유틸리티 함수
+    isDateInRange(targetDateObj, startDateStr, endDateStr) {
+        if (!startDateStr) return false; // 시작일이 없으면 범위에 포함되지 않음
+        
+        // 타겟 날짜: 월의 첫날
+        const targetDate = targetDateObj instanceof Date ? targetDateObj : new Date(targetDateObj);
+        const targetYear = targetDate.getFullYear();
+        const targetMonth = targetDate.getMonth();
+        
+        // 타겟 월의 마지막 날짜 (월 전체 비교를 위해)
+        const targetMonthLastDay = new Date(targetYear, targetMonth + 1, 0);
+        
+        // 시작일
+        const startDate = new Date(startDateStr);
+        
+        // 종료일 (없으면 미래 날짜)
+        let endDate;
+        if (endDateStr) {
+            endDate = new Date(endDateStr);
+        } else {
+            // 종료일이 없으면 미래 날짜로 설정 (사실상 무제한)
+            endDate = new Date(9999, 11, 31);
+        }
+        
+        // 날짜 시간 정보 제거 (시간 차이로 인한 오차 방지)
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999); // 종료일 포함하기 위해 그날의 마지막 시간으로 설정
+        targetDate.setHours(0, 0, 0, 0);
+        targetMonthLastDay.setHours(23, 59, 59, 999);
+
+        // 월 범위 확인: 타겟 월이 시작일과 종료일 사이에 있는지 확인
+        // (1) 타겟 월의 마지막 날이 시작일보다 이전이면 범위에 포함되지 않음
+        if (targetMonthLastDay < startDate) {
+            return false;
+        }
+        
+        // (2) 타겟 월의 첫날이 종료일보다 이후면 범위에 포함되지 않음
+        if (targetDate > endDate) {
+            return false;
+        }
+        
+        return true;
     },
     
     // 지출 항목을 분류별로 요약
@@ -394,20 +415,22 @@ const ExpenseCalendar = {
                     </ul>
                     <div class="tab-content" id="expenseDetailTabContent">
                         <div class="tab-pane fade show active" id="detail-content" role="tabpanel" aria-labelledby="detail-tab">
-                            <table class="table table-striped" id="expense-detail-list">
-                                <thead>
-                                    <tr>
-                                        <th>날짜</th>
-                                        <th>내용</th>
-                                        <th>분류</th>
-                                        <th>금액</th>
-                                        <th>잔액</th>
-                                        <th>관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table table-striped" id="expense-detail-list">
+                                    <thead>
+                                        <tr>
+                                            <th>날짜</th>
+                                            <th>내용</th>
+                                            <th>분류</th>
+                                            <th>금액</th>
+                                            <th>잔액</th>
+                                            <th>관리</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                         <div class="tab-pane fade" id="summary-content" role="tabpanel" aria-labelledby="summary-tab">
                             <div class="summary-container">
@@ -516,8 +539,9 @@ const ExpenseCalendar = {
         const initialBalanceRow = document.createElement('tr');
         initialBalanceRow.classList.add('table-light');
         initialBalanceRow.innerHTML = `
-            <td colspan="4"><strong>이전 잔액</strong></td>
-            <td><strong>${Utils.number.formatCurrency(initialBalance)}</strong></td>
+            <td colspan="3" class="text-start"><strong>이전 잔액</strong></td>
+            <td></td>
+            <td class="text-end"><strong>${Utils.number.formatCurrency(initialBalance)}</strong></td>
             <td></td>
         `;
         tbody.appendChild(initialBalanceRow);
@@ -549,86 +573,57 @@ const ExpenseCalendar = {
             
             // 잔액 표시 스타일
             const balanceClass = runningBalance >= 0 ? 'text-primary' : 'text-danger';
+            const balancePrefix = runningBalance >= 0 ? '+' : '';
             
-            // 중분류 이름 가져오기
-            let subCategoryName = '';
-            if (expense.subCategory) {
-                const subCategory = DataManager.data.categories.sub.find(c => c.code === expense.subCategory);
-                subCategoryName = subCategory ? ` > ${subCategory.name}` : '';
+            // 날짜 형식 간소화 - YYYY-MM-DD 대신 DD만 표시 (같은 월이므로)
+            const fullDateParts = expense.date.split('-');
+            const dayOnly = fullDateParts[2]; // 일자만 추출
+            
+            // 반복 지출인 경우 표시 (매일/매월)
+            let recurringBadge = '';
+            if (expense.isRecurring) {
+                if (expense.frequency === 'daily') {
+                    recurringBadge = '<span class="badge bg-success">매일</span> ';
+                } else {
+                    recurringBadge = '<span class="badge bg-primary">매월</span> ';
+                }
             }
             
-            // data-index 속성에 실제 데이터 인덱스 저장 (일회성/반복성 지출 구분용)
-            const expenseType = expense.isRecurring ? 'recurring' : 'onetime';
-            const dataIndex = expense.isRecurring 
-                ? DataManager.data.recurringExpenses.findIndex(e => 
-                    e.day === parseInt(expense.date.split('-')[2]) &&
-                    e.description === expense.description &&
-                    e.amount === expense.amount)
-                : DataManager.data.oneTimeExpenses.findIndex(e => 
-                    e.date === expense.date &&
-                    e.description === expense.description &&
-                    e.amount === expense.amount);
-            
-            tr.setAttribute('data-expense-type', expenseType);
-            tr.setAttribute('data-expense-index', dataIndex);
+            // 분류 정보 가져오기
+            let categoryInfo = '';
+            if (expense.mainCategoryName) {
+                categoryInfo = expense.mainCategoryName;
+                
+                // 중분류 정보가 있으면 추가
+                if (expense.subCategoryName) {
+                    categoryInfo += ` > ${expense.subCategoryName}`;
+                }
+            } else {
+                categoryInfo = '미분류';
+            }
             
             tr.innerHTML = `
-                <td>${expense.date}${expense.isRecurring ? ' <small>(정기)</small>' : ''}</td>
-                <td>${expense.description}</td>
-                <td>${expense.mainCategoryName}${subCategoryName}</td>
-                <td class="${amountClass}">${amountPrefix}${Utils.number.formatCurrency(expense.amount)}</td>
-                <td class="${balanceClass}">${Utils.number.formatCurrency(runningBalance)}</td>
+                <td>${dayOnly}일</td>
+                <td>${recurringBadge}${expense.description}</td>
+                <td>${categoryInfo}</td>
+                <td class="text-end ${amountClass}">${amountPrefix}${Utils.number.formatCurrency(expense.amount)}</td>
+                <td class="text-end ${balanceClass}">${balancePrefix}${Utils.number.formatCurrency(runningBalance)}</td>
                 <td>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary btn-edit-expense" title="수정">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-outline-danger btn-delete-expense" title="삭제">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
+                    <button class="btn btn-sm btn-outline-primary edit-expense-btn" data-id="${expense.id}">
+                        <i class="bi bi-pencil"></i>
+                    </button>
                 </td>
             `;
+            
             tbody.appendChild(tr);
             
-            // 수정 버튼 이벤트
-            tr.querySelector('.btn-edit-expense').addEventListener('click', () => {
-                // 정기 지출은 수정 불가 (복잡한 처리 필요)
-                if (expense.isRecurring) {
-                    alert('정기 지출은 반복 지출 탭에서 수정해주세요.');
-                    return;
-                }
-                
-                // 일회성 지출 수정 팝업 표시
-                this.showEditExpenseForm(dataIndex, expense, month);
-            });
-            
-            // 삭제 버튼 이벤트
-            tr.querySelector('.btn-delete-expense').addEventListener('click', () => {
-                if (confirm('이 항목을 삭제하시겠습니까?')) {
-                    try {
-                        if (expense.isRecurring) {
-                            // 반복 지출 삭제
-                            DataManager.removeRecurringExpense(dataIndex);
-                        } else {
-                            // 일회성 지출 삭제
-                            DataManager.removeOneTimeExpense(dataIndex);
-                        }
-                        
-                        // 성공 메시지
-                        alert('항목이 삭제되었습니다.');
-                        
-                        // 달력 갱신
-                        this.renderCalendar();
-                        
-                        // 상세보기 팝업 닫기
-                        popup.remove();
-                        
-                        // 지출 데이터 변경 이벤트 발생
-                        document.dispatchEvent(new CustomEvent('expenses-updated'));
-                    } catch (error) {
-                        alert('삭제 중 오류가 발생했습니다: ' + error.message);
-                    }
+            // 편집 버튼 이벤트 추가
+            tr.querySelector('.edit-expense-btn').addEventListener('click', () => {
+                // 일회성 지출인 경우에만 편집 가능
+                if (!expense.isRecurring) {
+                    this.showEditExpenseForm(expense.id, expense, month);
+                } else {
+                    alert('반복 지출은 반복 지출 관리 탭에서 편집해주세요.');
                 }
             });
         });
@@ -638,74 +633,61 @@ const ExpenseCalendar = {
         finalBalanceRow.classList.add('table-light');
         
         const finalBalanceClass = runningBalance >= 0 ? 'text-primary' : 'text-danger';
+        const finalBalancePrefix = runningBalance >= 0 ? '+' : '';
         
         finalBalanceRow.innerHTML = `
-            <td colspan="4"><strong>최종 잔액</strong></td>
-            <td class="${finalBalanceClass}"><strong>${Utils.number.formatCurrency(runningBalance)}</strong></td>
+            <td colspan="3" class="text-end"><strong>최종 잔액</strong></td>
+            <td></td>
+            <td class="text-end ${finalBalanceClass}"><strong>${finalBalancePrefix}${Utils.number.formatCurrency(runningBalance)}</strong></td>
             <td></td>
         `;
         tbody.appendChild(finalBalanceRow);
         
-        // 대분류별 요약 데이터 준비
+        // 요약 탭 내용 채우기
         const categorySummary = this.summarizeExpensesByCategory(expenses);
         
-        // 대분류 요약 테이블 채우기
-        const mainCategorySummary = popup.querySelector('#main-category-summary tbody');
-        if (mainCategorySummary) {
-            const total = categorySummary.totalExpense + categorySummary.totalIncome;
+        // 1. 대분류별 요약
+        const mainCategoryTbody = popup.querySelector('#main-category-summary tbody');
+        
+        for (const categoryCode in categorySummary.mainCategories) {
+            const category = categorySummary.mainCategories[categoryCode];
+            const row = document.createElement('tr');
             
-            for (const key in categorySummary.mainCategories) {
-                const category = categorySummary.mainCategories[key];
-                const tr = document.createElement('tr');
-                
-                // 수입/지출에 따라 스타일 변경
-                const amountClass = category.isIncome ? 'text-primary' : 'text-danger';
-                const amountPrefix = category.isIncome ? '+' : '-';
-                
-                // 비율 계산 (전체 금액 대비)
-                const percentage = total > 0 ? (category.amount / total) * 100 : 0;
-                
-                tr.innerHTML = `
-                    <td>${category.name}</td>
-                    <td>${category.count}건</td>
-                    <td class="${amountClass}">${amountPrefix}${Utils.number.formatCurrency(category.amount)}</td>
-                    <td>${Utils.number.formatPercent(percentage)}</td>
-                `;
-                mainCategorySummary.appendChild(tr);
-            }
+            // 금액 스타일 설정 (수입/지출에 따라)
+            const amountClass = category.isIncome ? 'text-primary' : 'text-danger';
+            const amountSign = category.isIncome ? '+' : '-';
             
-            // 합계 행 추가
-            const totalTr = document.createElement('tr');
-            totalTr.className = 'summary-total';
+            // 비율 계산
+            const totalAmount = category.isIncome ? categorySummary.totalIncome : categorySummary.totalExpense;
+            const percentage = totalAmount === 0 ? 0 : (category.amount / totalAmount * 100).toFixed(1);
             
-            totalTr.innerHTML = `
-                <td>합계</td>
-                <td>${categorySummary.totalCount}건</td>
-                <td class="${netAmountClass}">${netAmountPrefix}${Utils.number.formatCurrency(absNetAmount)}</td>
-                <td>100%</td>
+            row.innerHTML = `
+                <td>${category.name}</td>
+                <td>${category.count}건</td>
+                <td class="${amountClass}">${amountSign}${Utils.number.formatCurrency(category.amount)}</td>
+                <td>${percentage}%</td>
             `;
-            mainCategorySummary.appendChild(totalTr);
+            mainCategoryTbody.appendChild(row);
         }
         
-        // 중분류 요약 테이블 채우기
-        const subCategorySummary = popup.querySelector('#sub-category-summary tbody');
-        if (subCategorySummary) {
-            for (const key in categorySummary.subCategories) {
-                const category = categorySummary.subCategories[key];
-                const tr = document.createElement('tr');
-                
-                // 수입/지출에 따라 스타일 변경
-                const amountClass = category.isIncome ? 'text-primary' : 'text-danger';
-                const amountPrefix = category.isIncome ? '+' : '-';
-                
-                tr.innerHTML = `
-                    <td>${category.mainName}</td>
-                    <td>${category.name}</td>
-                    <td>${category.count}건</td>
-                    <td class="${amountClass}">${amountPrefix}${Utils.number.formatCurrency(category.amount)}</td>
-                `;
-                subCategorySummary.appendChild(tr);
-            }
+        // 2. 중분류별 요약
+        const subCategoryTbody = popup.querySelector('#sub-category-summary tbody');
+        
+        for (const categoryKey in categorySummary.subCategories) {
+            const category = categorySummary.subCategories[categoryKey];
+            const row = document.createElement('tr');
+            
+            // 금액 스타일 설정 (수입/지출에 따라)
+            const amountClass = category.isIncome ? 'text-primary' : 'text-danger';
+            const amountSign = category.isIncome ? '+' : '-';
+            
+            row.innerHTML = `
+                <td>${category.mainName}</td>
+                <td>${category.name}</td>
+                <td>${category.count}건</td>
+                <td class="${amountClass}">${amountSign}${Utils.number.formatCurrency(category.amount)}</td>
+            `;
+            subCategoryTbody.appendChild(row);
         }
     },
     
@@ -751,6 +733,12 @@ const ExpenseCalendar = {
                         <div class="mb-3">
                             <label for="edit-expense-sub-category" class="form-label">중분류:</label>
                             <select id="edit-expense-sub-category" class="form-control sub-category-selector" data-selected="${expense.subCategory || ''}"></select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" id="edit-expense-actual-payment" class="form-check-input" ${expense.isActualPayment === true ? 'checked' : ''}>
+                                <label for="edit-expense-actual-payment" class="form-check-label">실입금 항목</label>
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-primary">저장</button>
                     </form>
@@ -819,12 +807,13 @@ const ExpenseCalendar = {
         editExpenseForm.addEventListener('submit', (e) => {
             e.preventDefault();
             
-            const id = parseInt(document.getElementById('expense-id').value);
+            const id = document.getElementById('expense-id').value;
             const date = document.getElementById('edit-expense-date').value;
             const amount = document.getElementById('edit-expense-amount').value;
             const description = document.getElementById('edit-expense-description').value;
             const mainCategory = document.getElementById('edit-expense-main-category').value;
             const subCategory = document.getElementById('edit-expense-sub-category').value;
+            const isActualPayment = document.getElementById('edit-expense-actual-payment').checked;
             
             // 빈 필드 확인
             if (!date || !amount || !description || !mainCategory) {
@@ -834,7 +823,7 @@ const ExpenseCalendar = {
             
             try {
                 // 일회성 지출 수정
-                DataManager.updateOneTimeExpense(id, date, parseFloat(amount), description, mainCategory, subCategory);
+                DataManager.updateOneTimeExpense(id, date, parseFloat(amount), description, mainCategory, subCategory, isActualPayment);
                 
                 // 달력 갱신
                 this.renderCalendar();
@@ -944,6 +933,12 @@ const ExpenseCalendar = {
                             <label for="expense-sub-category" class="form-label">중분류:</label>
                             <select id="expense-sub-category" class="form-control sub-category-selector"></select>
                         </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" id="expense-actual-payment" class="form-check-input">
+                                <label for="expense-actual-payment" class="form-check-label">실입금 항목</label>
+                            </div>
+                        </div>
                         <button type="submit" class="btn btn-primary">등록</button>
                     </form>
                 </div>
@@ -986,6 +981,7 @@ const ExpenseCalendar = {
             const description = document.getElementById('expense-description').value;
             const mainCategory = document.getElementById('expense-main-category').value;
             const subCategory = document.getElementById('expense-sub-category').value;
+            const isActualPayment = document.getElementById('expense-actual-payment').checked;
             
             // 빈 필드 확인
             if (!date || !amount || !description || !mainCategory) {
@@ -995,7 +991,7 @@ const ExpenseCalendar = {
             
             // 일회성 지출 추가
             try {
-                DataManager.addOneTimeExpense(date, parseFloat(amount), description, mainCategory, subCategory);
+                DataManager.addOneTimeExpense(date, parseFloat(amount), description, mainCategory, subCategory, isActualPayment);
                 
                 // 달력 업데이트
                 this.renderCalendar();
@@ -1040,12 +1036,12 @@ const ExpenseCalendar = {
         
         // 반복 지출/수입 처리
         DataManager.data.recurringExpenses.forEach(expense => {
-            if (expense.startDate) {
-                const startDate = new Date(expense.startDate + '-01');
+            if (expense.startDate && expense.isActualPayment === true) {
+                const startDate = new Date(expense.startDate);
                 let endDate;
                 
                 if (expense.endDate) {
-                    endDate = new Date(expense.endDate + '-01');
+                    endDate = new Date(expense.endDate);
                 } else {
                     // 종료일이 없으면 현재 날짜까지로 계산
                     endDate = new Date();
@@ -1053,22 +1049,100 @@ const ExpenseCalendar = {
                 
                 const startYear = startDate.getFullYear();
                 const startMonth = startDate.getMonth();
+                const startDay = startDate.getDate();
+                
                 const endYear = endDate.getFullYear();
                 const endMonth = endDate.getMonth();
+                const endDay = endDate.getDate();
                 
-                // 해당 년도에 속하는 달만 계산
-                if (startYear <= DataManager.data.year && DataManager.data.year <= endYear) {
-                    const yearStartMonth = (startYear === DataManager.data.year) ? startMonth : 0;
-                    const yearEndMonth = (endYear === DataManager.data.year) ? endMonth : 11;
+                // 대분류 정보 찾기
+                const mainCategory = DataManager.data.categories.main.find(c => c.code === expense.mainCategory);
+                const isIncome = mainCategory?.type === 'income';
+                
+                // 수입은 양수, 지출은 음수로 계산
+                const unitAmount = isIncome ? expense.amount : -expense.amount;
+                
+                // 각 월별로 처리
+                for (let month = 0; month < 12; month++) {
+                    // 해당 월의 첫날 Date 객체 생성
+                    const monthDate = new Date(DataManager.data.year, month, 1);
                     
-                    for (let month = yearStartMonth; month <= yearEndMonth; month++) {
-                        // 대분류 정보 찾기
-                        const mainCategory = DataManager.data.categories.main.find(c => c.code === expense.mainCategory);
-                        const isIncome = mainCategory?.type === 'income';
+                    // 반복 범위 내에 해당 월이 있는지 확인
+                    const isInRange = this.isDateInRange(
+                        monthDate,
+                        expense.startDate,
+                        expense.endDate
+                    );
+                    
+                    // 범위 밖이면 계산 건너뛰기
+                    if (!isInRange) continue;
+                    
+                    if (expense.frequency === 'daily') {
+                        // 매일 반복 - 해당 월의 일수와 날짜 범위를 고려하여 계산
+                        const daysInMonth = new Date(DataManager.data.year, month + 1, 0).getDate();
                         
-                        // 수입은 양수, 지출은 음수로 저장
-                        const amount = isIncome ? expense.amount : -expense.amount;
-                        monthlyBalance[month] += amount;
+                        // 시작일과 종료일이 해당 월에 있는 경우 일수 조정
+                        let startDayInMonth = 1;
+                        let endDayInMonth = daysInMonth;
+                        
+                        // 첫 달인 경우 시작일 조정
+                        if (DataManager.data.year === startYear && month === startMonth) {
+                            startDayInMonth = startDay;
+                        }
+                        
+                        // 마지막 달인 경우 종료일 조정
+                        if (DataManager.data.year === endYear && month === endMonth) {
+                            endDayInMonth = endDay;
+                        }
+                        
+                        // 주말 및 공휴일을 제외한 근무일수 계산
+                        let businessDays = 0;
+                        for (let day = startDayInMonth; day <= endDayInMonth; day++) {
+                            const currentDate = new Date(DataManager.data.year, month, day);
+                            const dayOfWeek = currentDate.getDay();
+                            const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                            const isHoliday = this.isHoliday(currentDate);
+                            
+                            if ((!expense.skipWeekends || !isWeekend) && 
+                                (!expense.skipHolidays || !isHoliday)) {
+                                businessDays++;
+                            }
+                        }
+                        
+                        // 근무일수만큼 금액 추가
+                        monthlyBalance[month] += unitAmount * businessDays;
+                    } else {
+                        // 매월 반복일 경우 해당하는 월에 대해 계산
+                        // 해당 월의 마지막 일
+                        const lastDayOfMonth = new Date(DataManager.data.year, month + 1, 0).getDate();
+                        // 실제 지출일 (해당 월에 존재하는 일자로 제한)
+                        const expenseDay = Math.min(expense.day, lastDayOfMonth);
+                        
+                        // 첫 달인 경우 지출일이 시작일보다 이전이면 포함하지 않음
+                        if (DataManager.data.year === startYear && month === startMonth && expenseDay < startDay) {
+                            continue;
+                        }
+                        
+                        // 마지막 달인 경우 지출일이 종료일보다 이후면 포함하지 않음
+                        if (DataManager.data.year === endYear && month === endMonth && expenseDay > endDay) {
+                            continue;
+                        }
+                        
+                        // 주말이나 공휴일 제외 여부 확인
+                        if (expense.skipWeekends || expense.skipHolidays) {
+                            const expenseDateObj = new Date(DataManager.data.year, month, expenseDay);
+                            const dayOfWeek = expenseDateObj.getDay();
+                            const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                            const isHoliday = this.isHoliday(expenseDateObj);
+                            
+                            // 주말이거나 공휴일인 경우 조건에 따라 제외
+                            if ((expense.skipWeekends && isWeekend) || (expense.skipHolidays && isHoliday)) {
+                                continue;
+                            }
+                        }
+                        
+                        // 조건을 모두 만족하면 금액 추가
+                        monthlyBalance[month] += unitAmount;
                     }
                 }
             }
@@ -1080,7 +1154,8 @@ const ExpenseCalendar = {
                 const expenseDate = new Date(expense.date);
                 const expenseYear = expenseDate.getFullYear();
                 
-                if (expenseYear === DataManager.data.year) {
+                // 현재 연도의 지출이고 실입금 항목인 경우만 처리
+                if (expenseYear === DataManager.data.year && expense.isActualPayment === true) {
                     const expenseMonth = expenseDate.getMonth();
                     
                     // 대분류 정보 찾기
@@ -1129,8 +1204,8 @@ const ExpenseCalendar = {
             const expenseDate = new Date(expense.date);
             const expenseYear = expenseDate.getFullYear();
             
-            // 현재 선택된 연도의 지출/수입만 계산
-            if (expenseYear === DataManager.data.year) {
+            // 현재 선택된 연도의 지출/수입만 계산하고, 실입금 항목만 포함
+            if (expenseYear === DataManager.data.year && expense.isActualPayment === true) {
                 // 대분류 정보 찾기
                 const mainCategory = DataManager.data.categories.main.find(c => c.code === expense.mainCategory);
                 const isIncome = mainCategory?.type === 'income';
@@ -1148,20 +1223,22 @@ const ExpenseCalendar = {
         
         // 반복 지출/수입 항목도 직접 계산
         DataManager.data.recurringExpenses.forEach(expense => {
-            if (expense.startDate) {
-                const startDate = new Date(expense.startDate + '-01');
+            if (expense.startDate && expense.isActualPayment === true) {
+                const startDate = new Date(expense.startDate);
                 let endDate;
                 
                 if (expense.endDate) {
-                    endDate = new Date(expense.endDate + '-01');
+                    endDate = new Date(expense.endDate);
                 } else {
                     endDate = new Date();
                 }
                 
                 const startYear = startDate.getFullYear();
                 const startMonth = startDate.getMonth();
+                const startDay = startDate.getDate();
                 const endYear = endDate.getFullYear();
                 const endMonth = endDate.getMonth();
+                const endDay = endDate.getDate();
                 
                 // 해당 년도에 속하는 달만 계산
                 if (startYear <= DataManager.data.year && DataManager.data.year <= endYear) {
@@ -1169,22 +1246,92 @@ const ExpenseCalendar = {
                     const mainCategory = DataManager.data.categories.main.find(c => c.code === expense.mainCategory);
                     const isIncome = mainCategory?.type === 'income';
                     
+                    // 시작월과 종료월 지정 (현재 년도 기준)
                     const yearStartMonth = (startYear === DataManager.data.year) ? startMonth : 0;
                     const yearEndMonth = (endYear === DataManager.data.year) ? endMonth : 11;
                     
-                    // 해당 연도에 포함된 월 수 계산
-                    const monthCount = yearEndMonth - yearStartMonth + 1;
-                    
                     // 전체 금액 계산
-                    const totalAmount = expense.amount * monthCount;
+                    let totalAmount = 0;
+                    
+                    if (expense.frequency === 'daily') {
+                        // 매일 반복일 경우 주말과 공휴일을 제외한 근무일수 계산
+                        for (let month = yearStartMonth; month <= yearEndMonth; month++) {
+                            const daysInMonth = new Date(DataManager.data.year, month + 1, 0).getDate();
+                            
+                            // 시작일과 종료일이 해당 월에 있는 경우 일수 조정
+                            let startDayInMonth = 1;
+                            let endDayInMonth = daysInMonth;
+                            
+                            // 첫 달인 경우 시작일 조정
+                            if (DataManager.data.year === startYear && month === startMonth) {
+                                startDayInMonth = startDay;
+                            }
+                            
+                            // 마지막 달인 경우 종료일 조정
+                            if (DataManager.data.year === endYear && month === endMonth) {
+                                endDayInMonth = endDay;
+                            }
+                            
+                            // 주말 및 공휴일을 제외한 근무일수 계산
+                            let businessDays = 0;
+                            for (let day = startDayInMonth; day <= endDayInMonth; day++) {
+                                const currentDate = new Date(DataManager.data.year, month, day);
+                                const dayOfWeek = currentDate.getDay();
+                                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                                const isHoliday = this.isHoliday(currentDate);
+                                
+                                if ((!expense.skipWeekends || !isWeekend) && 
+                                    (!expense.skipHolidays || !isHoliday)) {
+                                    businessDays++;
+                                }
+                            }
+                            
+                            // 근무일수만큼 금액 추가
+                            totalAmount += expense.amount * businessDays;
+                        }
+                    } else {
+                        // 매월 반복일 경우 해당하는 각 달에 대해 따로 계산
+                        for (let month = yearStartMonth; month <= yearEndMonth; month++) {
+                            // 해당 월의 마지막 일
+                            const lastDayOfMonth = new Date(DataManager.data.year, month + 1, 0).getDate();
+                            // 실제 지출일 (해당 월에 존재하는 일자로 제한)
+                            const expenseDay = Math.min(expense.day, lastDayOfMonth);
+                            
+                            // 첫 달인데 지출일이 시작일보다 이전이면 포함하지 않음
+                            if (DataManager.data.year === startYear && month === startMonth && expenseDay < startDay) {
+                                continue;
+                            }
+                            
+                            // 마지막 달인데 지출일이 종료일보다 이후면 포함하지 않음
+                            if (DataManager.data.year === endYear && month === endMonth && expenseDay > endDay) {
+                                continue;
+                            }
+                            
+                            // 주말이나 공휴일 제외 여부 확인
+                            if (expense.skipWeekends || expense.skipHolidays) {
+                                const expenseDateObj = new Date(DataManager.data.year, month, expenseDay);
+                                const dayOfWeek = expenseDateObj.getDay();
+                                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                                const isHoliday = this.isHoliday(expenseDateObj);
+                                
+                                // 주말이거나 공휴일인 경우 조건에 따라 제외
+                                if ((expense.skipWeekends && isWeekend) || (expense.skipHolidays && isHoliday)) {
+                                    continue;
+                                }
+                            }
+                            
+                            // 조건을 모두 만족하면 금액 추가
+                            totalAmount += expense.amount;
+                        }
+                    }
                     
                     // 수입과 지출 구분해서 합산
                     if (isIncome) {
                         totalOriginalIncome += totalAmount;
-                        console.log(`반복 수입: +${totalAmount} (${expense.description} x ${monthCount}개월)`);
+                        console.log(`반복 수입: +${totalAmount} (${expense.description} x ${expense.frequency === 'daily' ? '매일(주말/공휴일 제외)' : '매월'}, ${yearStartMonth+1}월~${yearEndMonth+1}월)`);
                     } else {
                         totalOriginalExpense += totalAmount;
-                        console.log(`반복 지출: -${totalAmount} (${expense.description} x ${monthCount}개월)`);
+                        console.log(`반복 지출: -${totalAmount} (${expense.description} x ${expense.frequency === 'daily' ? '매일(주말/공휴일 제외)' : '매월'}, ${yearStartMonth+1}월~${yearEndMonth+1}월)`);
                     }
                 }
             }
@@ -1201,5 +1348,38 @@ const ExpenseCalendar = {
             totalOriginalExpense,
             finalBalance
         };
+    },
+    
+    // 공휴일인지 확인하는 함수
+    isHoliday(date) {
+        // 날짜 포맷: YYYY-MM-DD
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1; // 월은 0부터 시작하므로 +1
+        const day = date.getDate();
+        
+        // 주요 공휴일 목록 (월-일 형식으로 고정된 공휴일만)
+        const fixedHolidays = {
+            '1-1': '신정',
+            '3-1': '삼일절',
+            '5-5': '어린이날',
+            '6-6': '현충일',
+            '8-15': '광복절',
+            '10-3': '개천절',
+            '10-9': '한글날',
+            '12-25': '크리스마스'
+        };
+        
+        // 월-일 형식의 키 생성
+        const key = `${month}-${day}`;
+        
+        // 고정 공휴일인지 확인
+        if (fixedHolidays[key]) {
+            return true;
+        }
+        
+        // 설날, 추석 등 음력 공휴일은 더 복잡한 계산이 필요하지만 여기서는 생략
+        // 실제 구현 시에는 음력-양력 변환 알고리즘 또는 외부 라이브러리 사용 권장
+        
+        return false;
     }
 }; 
