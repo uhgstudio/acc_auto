@@ -606,12 +606,6 @@ const ExpenseCalendar = {
                         const amountClass = mainCategory.type === 'income' ? 'text-primary' : 'text-danger';
                         const amountPrefix = mainCategory.type === 'income' ? '+' : '-';
                         
-                        // 반복 지출 여부에 따른 배지 추가
-                        let recurringBadge = '';
-                        if (expense.recurringId) {
-                            recurringBadge = '<span class="badge bg-info ms-1">반복</span>';
-                        }
-                        
                         // 실제 입금 여부 배지
                         const actualPaymentBadge = expense.isActualPayment ? 
                             '<span class="badge bg-success actual-payment-badge" data-id="' + expense.id + '">✓</span>' : 
@@ -619,7 +613,7 @@ const ExpenseCalendar = {
                         
                         tr.innerHTML = `
                             <td style="font-size: 14px;">${expense.date}</td>
-                            <td style="font-size: 14px; word-break: break-all; overflow-wrap: break-word;">${expense.description}${recurringBadge}</td>
+                            <td style="font-size: 14px; word-break: break-all; overflow-wrap: break-word;">${expense.description}</td>
                             <td style="font-size: 14px;">${mainCategory.name} > ${subCategory.name}</td>
                             <td class="text-end ${amountClass}" style="font-size: 14px;">${amountPrefix}${Utils.number.formatCurrency(expense.amount)}</td>
                             <td class="text-center">${actualPaymentBadge}</td>
