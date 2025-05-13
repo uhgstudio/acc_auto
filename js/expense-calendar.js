@@ -423,6 +423,11 @@ const ExpenseCalendar = {
                                     </div>
                                     <button id="nextPage" class="pagination-button">다음 <i class="bi bi-chevron-right"></i></button>
                                 </div>
+                                <div>
+                                    <button id="add-expense-in-detail" class="btn btn-sm btn-success">
+                                        <i class="bi bi-plus"></i> 새 항목 추가
+                                    </button>
+                                </div>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-hover" id="expense-detail-list" style="width: 100%; table-layout: fixed;">
@@ -524,13 +529,6 @@ const ExpenseCalendar = {
             }
         };
         document.addEventListener('keydown', escHandler);
-        
-        // 팝업 외부 클릭시 닫기
-        popup.addEventListener('click', (e) => {
-            if (e.target === popup) {
-                popup.remove();
-            }
-        });
         
         // 상세 내역 테이블 채우기
         const tbody = popup.querySelector('#expense-detail-list tbody');
@@ -773,6 +771,18 @@ const ExpenseCalendar = {
             }
         });
         
+        // 새 항목 추가 버튼 이벤트 설정
+        const addExpenseBtn = popup.querySelector('#add-expense-in-detail');
+        if (addExpenseBtn) {
+            addExpenseBtn.addEventListener('click', () => {
+                // 팝업 닫기
+                popup.remove();
+                
+                // 해당 월의 지출 추가 폼 표시
+                this.showAddExpenseForm(month);
+            });
+        }
+        
         // 키보드 페이지 이동 지원
         popup.addEventListener('keydown', (e) => {
             // 왼쪽 화살표 - 이전 페이지
@@ -903,12 +913,7 @@ const ExpenseCalendar = {
         };
         document.addEventListener('keydown', escHandler);
         
-        // 팝업 외부 클릭시 닫기
-        popup.addEventListener('click', (e) => {
-            if (e.target === popup) {
-                popup.remove();
-            }
-        });
+        // 팝업 외부 클릭시 닫기 기능 제거
         
         // 대분류 선택기 초기화 및 선택된 값 설정
         CategoryManager.updateMainCategorySelectors();
@@ -1134,12 +1139,7 @@ const ExpenseCalendar = {
         };
         document.addEventListener('keydown', escHandler);
         
-        // 팝업 외부 클릭시 닫기
-        popup.addEventListener('click', (e) => {
-            if (e.target === popup) {
-                popup.remove();
-            }
-        });
+        // 팝업 외부 클릭시 닫기 기능 제거
         
         // 대분류 선택기 초기화
         CategoryManager.updateMainCategorySelectors();
