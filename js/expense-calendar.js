@@ -863,11 +863,8 @@ const ExpenseCalendar = {
         const addExpenseBtn = popup.querySelector('#add-expense-in-detail');
         if (addExpenseBtn) {
             addExpenseBtn.addEventListener('click', () => {
-                // 팝업 닫기
-                popup.remove();
-                
-                // 해당 월의 지출 추가 폼 표시
-                this.showAddExpenseForm(month);
+                // 새 코드: 현재 팝업을 닫지 않고 지출 추가 폼을 포함한 임시 팝업 생성
+                this.showAddExpenseFormInline(month, popup);
             });
         }
         
@@ -1151,7 +1148,7 @@ const ExpenseCalendar = {
         });
     },
     
-    // 지출 추가 폼 표시
+    // 지출 추가 폼 표시 - 기본 버전 (월별 달력에서 호출)
     showAddExpenseForm(month) {
         // 기존 팝업 제거
         const existingPopup = document.getElementById('add-expense-popup');
@@ -1273,6 +1270,192 @@ const ExpenseCalendar = {
         // 대분류 변경 시 중분류 업데이트
         const mainCategorySelect = document.getElementById('expense-main-category');
         const subCategorySelect = document.getElementById('expense-sub-category');
+        
+        mainCategorySelect.addEventListener('change', () => {
+            const mainCode = mainCategorySelect.value;
+            if (mainCode) {
+                // 대분류에 맞는 중분류 옵션 업데이트
+                CategoryManager.populateSubCategorySelector(mainCode, subCategorySelect);
+            } else {
+                // 대분류가 선택되지 않은 경우 중분류 초기화
+                Utils.dom.clearElement(subCategorySelect);
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = '중분류 선택';
+                subCategorySelect.appendChild(defaultOption);
+            }
+        });
+    },
+    
+    // 지출 추가 폼을 현재 팝업 내에 표시 (상세보기에서 닫지 않고 사용)
+    showAddExpenseFormInline(month, parentPopup) {
+        // 현재 년도 가져오기
+        const year = DataManager.data.year;
+        
+        // 해당 월의 기본 날짜 설정 (해당 월의 1일)
+        const defaultDate = `${year}-${month.toString().padStart(2, '0')}-01`;
+        
+        // 내부 팝업 컨테이너 생성
+        const inlinePopup = document.createElement('div');
+        inlinePopup.id = 'add-expense-inline-popup';
+        inlinePopup.className = 'expense-popup-overlay';
+        inlinePopup.style.position = 'fixed';
+        inlinePopup.style.top = '0';
+        inlinePopup.style.left = '0';
+        inlinePopup.style.width = '100%';
+        inlinePopup.style.height = '100%';
+        inlinePopup.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        inlinePopup.style.zIndex = '9999';
+        inlinePopup.style.display = 'flex';
+        inlinePopup.style.justifyContent = 'center';
+        inlinePopup.style.alignItems = 'center';
+        
+        // 팝업 내용 생성
+        inlinePopup.innerHTML = `
+            <div class="popup-content" style="max-width: 500px; background-color: white; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.2);">
+                <div class="popup-header">
+                    <h3>${year}년 ${month}월 지출 등록</h3>
+                    <button id="close-add-expense-inline-popup" class="close-popup-btn">&times;</button>
+                </div>
+                <div class="popup-body">
+                    <form id="add-expense-inline-form">
+                        <div class="mb-3">
+                            <label for="expense-inline-date" class="form-label">날짜:</label>
+                            <input type="date" id="expense-inline-date" class="form-control" value="${defaultDate}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="expense-inline-amount" class="form-label">금액:</label>
+                            <input type="number" id="expense-inline-amount" class="form-control" placeholder="금액" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="expense-inline-description" class="form-label">내용:</label>
+                            <input type="text" id="expense-inline-description" class="form-control" placeholder="지출 내용" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="expense-inline-main-category" class="form-label">대분류:</label>
+                            <select id="expense-inline-main-category" class="form-control main-category-selector" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="expense-inline-sub-category" class="form-label">중분류:</label>
+                            <select id="expense-inline-sub-category" class="form-control sub-category-selector"></select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" id="expense-inline-actual-payment" class="form-check-input">
+                                <label for="expense-inline-actual-payment" class="form-check-label">실입금 항목</label>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" id="cancel-add-expense-inline" class="btn btn-outline-secondary me-2">취소</button>
+                            <button type="submit" class="btn btn-primary">등록</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(inlinePopup);
+        
+        // 닫기 버튼 이벤트
+        const closeBtn = inlinePopup.querySelector('#close-add-expense-inline-popup');
+        const cancelBtn = inlinePopup.querySelector('#cancel-add-expense-inline');
+        
+        const closeInlinePopup = () => {
+            inlinePopup.remove();
+        };
+        
+        closeBtn.addEventListener('click', closeInlinePopup);
+        cancelBtn.addEventListener('click', closeInlinePopup);
+        
+        // ESC 키로 팝업 닫기
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                inlinePopup.remove();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+        
+        // 배경 클릭시 닫기
+        inlinePopup.addEventListener('click', (e) => {
+            if (e.target === inlinePopup) {
+                closeInlinePopup();
+            }
+        });
+        
+        // 대분류 선택기 초기화
+        CategoryManager.updateMainCategorySelectors();
+        
+        // 폼 제출 이벤트
+        const addExpenseForm = inlinePopup.querySelector('#add-expense-inline-form');
+        addExpenseForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const date = document.getElementById('expense-inline-date').value;
+            const amount = document.getElementById('expense-inline-amount').value;
+            const description = document.getElementById('expense-inline-description').value;
+            const mainCategory = document.getElementById('expense-inline-main-category').value;
+            const subCategory = document.getElementById('expense-inline-sub-category').value;
+            const isActualPayment = document.getElementById('expense-inline-actual-payment').checked;
+            
+            // 빈 필드 확인
+            if (!date || !amount || !description || !mainCategory) {
+                alert('모든 필수 필드를 입력해주세요.');
+                return;
+            }
+            
+            // 일회성 지출 추가
+            try {
+                DataManager.addOneTimeExpense(date, parseFloat(amount), description, mainCategory, subCategory, isActualPayment);
+                
+                // 달력 업데이트
+                this.renderCalendar();
+                
+                // 지출 데이터 변경 이벤트 발생
+                document.dispatchEvent(new CustomEvent('expenses-updated'));
+                
+                // 성공 메시지
+                alert('지출이 성공적으로 등록되었습니다.');
+                
+                // 내부 팝업 닫기
+                closeInlinePopup();
+                
+                // 부모 팝업의 데이터 갱신
+                if (parentPopup) {
+                    // 상세보기 팝업 업데이트 - 현재 팝업 제거 후 새 데이터로 다시 열기
+                    const updatedExpenses = this.getMonthlyExpenses(DataManager.data.year, month);
+                    
+                    // 기존 필터 상태 저장
+                    const startDate = document.getElementById('date-filter-start')?.value;
+                    const endDate = document.getElementById('date-filter-end')?.value;
+                    
+                    // 기존 팝업 제거
+                    parentPopup.remove();
+                    
+                    // 상세보기 팝업 다시 열기
+                    this.showExpenseDetail(month, updatedExpenses);
+                    
+                    // 필터 상태가 있었다면 복원
+                    if (startDate && endDate) {
+                        const newStartDateInput = document.getElementById('date-filter-start');
+                        const newEndDateInput = document.getElementById('date-filter-end');
+                        const applyFilterBtn = document.getElementById('apply-date-filter');
+                        
+                        if (newStartDateInput && newEndDateInput && applyFilterBtn) {
+                            newStartDateInput.value = startDate;
+                            newEndDateInput.value = endDate;
+                            applyFilterBtn.click();
+                        }
+                    }
+                }
+            } catch (error) {
+                alert('지출 등록 중 오류가 발생했습니다: ' + error.message);
+            }
+        });
+        
+        // 대분류 변경 시 중분류 업데이트
+        const mainCategorySelect = document.getElementById('expense-inline-main-category');
+        const subCategorySelect = document.getElementById('expense-inline-sub-category');
         
         mainCategorySelect.addEventListener('change', () => {
             const mainCode = mainCategorySelect.value;
