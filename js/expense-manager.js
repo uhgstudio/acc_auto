@@ -185,13 +185,6 @@ const ExpenseManager = {
             </div>
         `;
         
-        // 일회성 지출이 없는 경우
-        if (DataManager.data.oneTimeExpenses.length === 0) {
-            oneTimeExpenseList.innerHTML = filterHtml + '<p>등록된 일회성 지출이 없습니다.</p>';
-            this.setupFilterEventListeners(); // 필터 이벤트 리스너 설정
-            return;
-        }
-        
         // 필터 적용된 테이블 생성
         let html = filterHtml;
         html += `
@@ -214,8 +207,14 @@ const ExpenseManager = {
         
         oneTimeExpenseList.innerHTML = html;
         
-        // 기본 필터 (오늘 날짜) 적용
-        this.filterOneTimeExpenses(defaultDate, defaultDate);
+        // 데이터가 없는 경우 메시지 표시
+        if (DataManager.data.oneTimeExpenses.length === 0) {
+            const tableBody = document.getElementById('one-time-expense-body');
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center">등록된 일회성 지출이 없습니다.</td></tr>`;
+        } else {
+            // 기본 필터 (오늘 날짜) 적용
+            this.filterOneTimeExpenses(defaultDate, defaultDate);
+        }
         
         // 필터 이벤트 리스너 설정
         this.setupFilterEventListeners();
@@ -545,21 +544,29 @@ const ExpenseManager = {
                         // 금액을 문자열에서 숫자로 변환 (콤마 제거)
                         const numericAmount = parseFloat(amount.replace(/,/g, ''));
                         
-                        DataManager.addRecurringExpense(frequency, day, numericAmount, description, startDate, endDate, mainCategory, subCategory, skipWeekends, skipHolidays, isActualPayment);
-                        
-                        // 입력 필드 초기화
-                        document.getElementById('recurring-day').value = '';
-                        document.getElementById('recurring-amount').value = '';
-                        document.getElementById('recurring-description').value = '';
-                        document.getElementById('recurring-end-date').value = '';
-                        document.getElementById('recurring-skip-weekends').checked = false;
-                        document.getElementById('recurring-skip-holidays').checked = false;
-                        
-                        // 목록 갱신
-                        this.renderRecurringExpenses();
-                        
-                        // 달력 업데이트를 위한 이벤트 발생
-                        document.dispatchEvent(new CustomEvent('expenses-updated'));
+                        DataManager.addRecurringExpense(frequency, day, numericAmount, description, startDate, endDate, mainCategory, subCategory, skipWeekends, skipHolidays, isActualPayment)
+                            .then(result => {
+                                // 입력 필드 초기화
+                                document.getElementById('recurring-day').value = '';
+                                document.getElementById('recurring-amount').value = '';
+                                document.getElementById('recurring-description').value = '';
+                                document.getElementById('recurring-end-date').value = '';
+                                document.getElementById('recurring-skip-weekends').checked = false;
+                                document.getElementById('recurring-skip-holidays').checked = false;
+                                
+                                // 목록 갱신
+                                this.renderRecurringExpenses();
+                                
+                                // 달력 업데이트를 위한 이벤트 발생
+                                document.dispatchEvent(new CustomEvent('expenses-updated'));
+                                
+                                // 성공 알림 표시
+                                this.showNotification('success', '반복 지출이 등록되었습니다.');
+                            })
+                            .catch(error => {
+                                console.error('반복 지출 등록 오류:', error);
+                                this.showNotification('error', `오류: ${error.message}`);
+                            });
                     } catch (error) {
                         alert(error.message);
                     }
@@ -592,17 +599,25 @@ const ExpenseManager = {
                             throw new Error('올바른 금액을 입력해주세요.');
                         }
                         
-                        DataManager.addOneTimeExpense(date, amount, description, mainCategory, subCategory, isActualPayment, vendor);
-                        
-                        // 입력 필드 초기화
-                        document.getElementById('one-time-amount').value = '';
-                        document.getElementById('one-time-description').value = '';
-                        
-                        // 목록 갱신
-                        this.renderOneTimeExpenses();
-                        
-                        // 달력 업데이트를 위한 이벤트 발생
-                        document.dispatchEvent(new CustomEvent('expenses-updated'));
+                        DataManager.addOneTimeExpense(date, amount, description, mainCategory, subCategory, isActualPayment, vendor)
+                            .then(result => {
+                                // 입력 필드 초기화
+                                document.getElementById('one-time-amount').value = '';
+                                document.getElementById('one-time-description').value = '';
+                                
+                                // 목록 갱신
+                                this.renderOneTimeExpenses();
+                                
+                                // 달력 업데이트를 위한 이벤트 발생
+                                document.dispatchEvent(new CustomEvent('expenses-updated'));
+                                
+                                // 성공 알림 표시
+                                this.showNotification('success', '일회성 지출이 등록되었습니다.');
+                            })
+                            .catch(error => {
+                                console.error('일회성 지출 등록 오류:', error);
+                                this.showNotification('error', `오류: ${error.message}`);
+                            });
                     } catch (error) {
                         alert(error.message);
                     }
@@ -614,5 +629,21 @@ const ExpenseManager = {
         
         // 대분류 선택 시 중분류 옵션 업데이트 이벤트
         this.updateCategorySelectors();
+    },
+    
+    // 알림 표시 메서드
+    showNotification(type, message) {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} mt-3`;
+        notification.role = 'alert';
+        notification.textContent = message;
+        
+        const notificationContainer = document.getElementById('notification-container');
+        if (notificationContainer) {
+            notificationContainer.appendChild(notification);
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
     }
 }; 

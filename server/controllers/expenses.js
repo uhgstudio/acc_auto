@@ -10,8 +10,9 @@ exports.getOneTimeExpenses = async (req, res, next) => {
     
     // 년도 필터링 (선택 사항)
     if (year) {
-      const startDate = new Date(`${year}-01-01`);
-      const endDate = new Date(`${year}-12-31`);
+      // 날짜 문자열로 필터링
+      const startDate = `${year}-01-01`;
+      const endDate = `${year}-12-31`;
       query.date = {
         $gte: startDate,
         $lte: endDate
@@ -19,11 +20,16 @@ exports.getOneTimeExpenses = async (req, res, next) => {
     }
     
     const expenses = await OneTimeExpense.find(query).sort({ date: -1 });
+    
+    // 응답 데이터 준비
+    const formattedExpenses = expenses.map(expense => {
+      return expense.toObject();
+    });
 
     res.status(200).json({
       success: true,
-      count: expenses.length,
-      data: expenses
+      count: formattedExpenses.length,
+      data: formattedExpenses
     });
   } catch (err) {
     res.status(400).json({
@@ -41,11 +47,28 @@ exports.createOneTimeExpense = async (req, res, next) => {
     // req.user.id를 요청 객체에 추가
     req.body.user = req.user.id;
     
+    // 날짜 형식 처리
+    if (req.body.date && typeof req.body.date === 'string') {
+      // YYYY-MM-DD 형식이면 Date 객체로 변환하되 시간 정보 제거
+      const dateParts = req.body.date.split('-');
+      if (dateParts.length === 3) {
+        const year = parseInt(dateParts[0]);
+        const month = parseInt(dateParts[1]); // 1부터 시작하는 월
+        const day = parseInt(dateParts[2]);
+        
+        // Date 객체 생성하지 않고 문자열로 저장
+        req.body.date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      }
+    }
+    
     const expense = await OneTimeExpense.create(req.body);
+    
+    // 응답 객체 생성
+    const responseData = expense.toObject();
 
     res.status(201).json({
       success: true,
-      data: expense
+      data: responseData
     });
   } catch (err) {
     res.status(400).json({
@@ -76,10 +99,13 @@ exports.getOneTimeExpense = async (req, res, next) => {
         error: '이 지출/수입을 조회할 권한이 없습니다'
       });
     }
+    
+    // 응답 객체 생성
+    const responseData = expense.toObject();
 
     res.status(200).json({
       success: true,
-      data: expense
+      data: responseData
     });
   } catch (err) {
     res.status(400).json({
@@ -110,15 +136,32 @@ exports.updateOneTimeExpense = async (req, res, next) => {
         error: '이 지출/수입을 수정할 권한이 없습니다'
       });
     }
+    
+    // 날짜 형식 처리
+    if (req.body.date && typeof req.body.date === 'string') {
+      // YYYY-MM-DD 형식이면 문자열 그대로 저장
+      const dateParts = req.body.date.split('-');
+      if (dateParts.length === 3) {
+        const year = parseInt(dateParts[0]);
+        const month = parseInt(dateParts[1]); 
+        const day = parseInt(dateParts[2]);
+        
+        // 문자열 형식으로 저장
+        req.body.date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      }
+    }
 
     expense = await OneTimeExpense.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
     });
+    
+    // 응답 객체 생성
+    const responseData = expense.toObject();
 
     res.status(200).json({
       success: true,
-      data: expense
+      data: responseData
     });
   } catch (err) {
     res.status(400).json({

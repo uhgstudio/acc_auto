@@ -251,6 +251,52 @@ const api = {
       const response = await axios.put(`/categories/sub/code/${code}`, categoryData);
       return response.data;
     }
+  },
+  
+  // 공휴일 관련 API
+  holidays: {
+    getAll: async (year) => {
+      const axios = await getAxiosInstance();
+      const url = year ? `/holidays?year=${year}` : '/holidays';
+      const response = await axios.get(url);
+      return response.data;
+    },
+    
+    getById: async (id) => {
+      const axios = await getAxiosInstance();
+      const response = await axios.get(`/holidays/${id}`);
+      return response.data;
+    },
+    
+    create: async (holidayData) => {
+      const axios = await getAxiosInstance();
+      const response = await axios.post('/holidays', holidayData);
+      return response.data;
+    },
+    
+    batchCreate: async (holidays) => {
+      const axios = await getAxiosInstance();
+      const response = await axios.post('/holidays/batch', { holidays });
+      return response.data;
+    },
+    
+    update: async (id, holidayData) => {
+      const axios = await getAxiosInstance();
+      const response = await axios.put(`/holidays/${id}`, holidayData);
+      return response.data;
+    },
+    
+    delete: async (id) => {
+      const axios = await getAxiosInstance();
+      const response = await axios.delete(`/holidays/${id}`);
+      return response.data;
+    },
+    
+    deleteByYear: async (year) => {
+      const axios = await getAxiosInstance();
+      const response = await axios.delete(`/holidays/year/${year}`);
+      return response.data;
+    }
   }
 };
 

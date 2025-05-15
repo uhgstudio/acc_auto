@@ -2062,4 +2062,37 @@ const ExpenseCalendar = {
             }
         });
     },
+    
+    // 달력 관련 이벤트 리스너 설정
+    setupCalendarEventListeners() {
+        // 연도 변경 버튼 이벤트
+        const prevYearBtn = document.getElementById('prev-year-btn');
+        const nextYearBtn = document.getElementById('next-year-btn');
+        
+        if (prevYearBtn) {
+            prevYearBtn.addEventListener('click', () => {
+                DataManager.data.year--;
+                document.getElementById('calendar-year').textContent = DataManager.data.year;
+                this.renderCalendar();
+            });
+        } else {
+            console.warn('prev-year-btn 버튼 요소를 찾을 수 없습니다.');
+        }
+        
+        if (nextYearBtn) {
+            nextYearBtn.addEventListener('click', () => {
+                DataManager.data.year++;
+                document.getElementById('calendar-year').textContent = DataManager.data.year;
+                this.renderCalendar();
+            });
+        } else {
+            console.warn('next-year-btn 버튼 요소를 찾을 수 없습니다.');
+        }
+        
+        // 지출 데이터 변경 이벤트 - 달력 자동 갱신
+        document.addEventListener('expenses-updated', () => {
+            // 이벤트 발생 시 달력 다시 렌더링
+            this.renderCalendar();
+        });
+    },
 }; 

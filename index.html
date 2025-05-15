@@ -1197,6 +1197,7 @@
                 
                 <!-- 반복 지출 탭 -->
                 <div class="tab-pane fade" id="recurring-expense-tab" role="tabpanel" aria-labelledby="recurring-expense-tab-btn">
+                    <h2>반복 지출 관리</h2>
                     <div class="row">
                         <div class="col-md-4">
                             <h3>반복 지출 등록</h3>
@@ -1208,54 +1209,72 @@
                                         <option value="daily">매일</option>
                                     </select>
                                 </div>
+                                
                                 <div class="mb-3" id="recurring-day-container">
-                                    <label for="recurring-day" class="form-label">지출일:</label>
-                                    <input type="number" id="recurring-day" min="1" max="31" class="form-control" placeholder="1-31">
+                                    <label for="recurring-day" class="form-label">일자:</label>
+                                    <input type="number" id="recurring-day" class="form-control" min="1" max="31" placeholder="매월 반복되는 일자">
                                 </div>
+                                
                                 <div class="mb-3">
-                                    <label for="recurring-amount" class="form-label">금액:</label>
-                                    <input type="number" id="recurring-amount" class="form-control" placeholder="금액">
+                                    <label for="recurring-vendor" class="form-label">거래처:</label>
+                                    <input type="text" id="recurring-vendor" class="form-control" placeholder="거래처명">
                                 </div>
+                                
                                 <div class="mb-3">
                                     <label for="recurring-description" class="form-label">내용:</label>
                                     <input type="text" id="recurring-description" class="form-control" placeholder="지출 내용">
                                 </div>
+                                
                                 <div class="mb-3">
-                                    <label for="recurring-main-category" class="form-label">대분류:</label>
-                                    <select id="recurring-main-category" class="form-control main-category-selector"></select>
+                                    <label for="recurring-amount" class="form-label">금액:</label>
+                                    <input type="number" id="recurring-amount" class="form-control" placeholder="금액">
                                 </div>
-                                <div class="mb-3">
-                                    <label for="recurring-sub-category" class="form-label">중분류:</label>
-                                    <select id="recurring-sub-category" class="form-control sub-category-selector"></select>
-                                </div>
+                                
                                 <div class="mb-3">
                                     <label for="recurring-start-date" class="form-label">시작일:</label>
                                     <input type="date" id="recurring-start-date" class="form-control">
                                 </div>
+                                
                                 <div class="mb-3">
                                     <label for="recurring-end-date" class="form-label">종료일 (선택):</label>
                                     <input type="date" id="recurring-end-date" class="form-control">
                                 </div>
+                                
+                                <div class="mb-3">
+                                    <label for="recurring-main-category" class="form-label">대분류:</label>
+                                    <select id="recurring-main-category" class="form-control main-category-selector"></select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="recurring-sub-category" class="form-label">중분류:</label>
+                                    <select id="recurring-sub-category" class="form-control sub-category-selector"></select>
+                                </div>
+                                
                                 <div class="mb-3">
                                     <div class="form-check">
                                         <input type="checkbox" id="recurring-skip-weekends" class="form-check-input">
                                         <label for="recurring-skip-weekends" class="form-check-label">주말 제외</label>
                                     </div>
                                 </div>
+                                
                                 <div class="mb-3">
                                     <div class="form-check">
                                         <input type="checkbox" id="recurring-skip-holidays" class="form-check-input">
                                         <label for="recurring-skip-holidays" class="form-check-label">공휴일 제외</label>
                                     </div>
                                 </div>
+                                
                                 <div class="mb-3">
                                     <div class="form-check">
-                                        <input type="checkbox" id="recurring-actual-payment" class="form-check-input">
+                                        <input type="checkbox" id="recurring-actual-payment" class="form-check-input" checked>
                                         <label for="recurring-actual-payment" class="form-check-label">실입금 항목</label>
                                     </div>
                                 </div>
+                                
                                 <button type="submit" class="btn btn-primary">등록</button>
                             </form>
+                            <!-- 알림 컨테이너 추가 -->
+                            <div id="notification-container"></div>
                         </div>
                         <div class="col-md-8">
                             <h3>반복 지출 목록</h3>
@@ -1303,6 +1322,8 @@
                                 </div>
                                 <button type="submit" class="btn btn-primary">등록</button>
                             </form>
+                            <!-- 알림 컨테이너 추가 -->
+                            <div id="notification-container"></div>
                         </div>
                         <div class="col-md-8">
                             <h3>일회성 지출 목록</h3>

@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 // 일회성 지출/수입 스키마
 const OneTimeExpenseSchema = new mongoose.Schema({
   date: {
-    type: Date,
+    type: String,
     required: [true, '날짜는 필수입니다']
   },
   amount: {

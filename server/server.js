@@ -16,6 +16,7 @@ connectDB();
 const auth = require('./routes/auth');
 const expenses = require('./routes/expenses');
 const categories = require('./routes/categories');
+const holidays = require('./routes/holidays');
 
 // Express 앱 초기화
 const app = express();
@@ -45,6 +46,7 @@ app.use((err, req, res, next) => {
 app.use('/api/auth', auth);
 app.use('/api/expenses', expenses);
 app.use('/api/categories', categories);
+app.use('/api/holidays', holidays);
 
 // 정적 파일 제공
 app.use(express.static(path.join(__dirname, '../')));

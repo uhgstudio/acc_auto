@@ -86,6 +86,56 @@ const DataManager = {
                             console.error('카테고리 데이터 로드 중 오류:', error);
                         }
                         
+                        // 공휴일 데이터 로드
+                        try {
+                            console.log('공휴일 데이터 로드 중...');
+                            const holidaysResponse = await window.api.holidays.getAll(this.data.year);
+                            console.log('공휴일 응답:', holidaysResponse);
+                            
+                            if (holidaysResponse.success && holidaysResponse.data) {
+                                const yearStr = this.data.year.toString();
+                                
+                                // 해당 연도의 공휴일 배열이 없으면 초기화
+                                if (!this.data.holidays[yearStr]) {
+                                    this.data.holidays[yearStr] = [];
+                                } else {
+                                    // 기존 데이터 초기화 (서버에서 새로운 데이터로 덮어쓰기)
+                                    this.data.holidays[yearStr] = [];
+                                }
+                                
+                                // API에서 가져온 공휴일 데이터 처리
+                                holidaysResponse.data.forEach(holiday => {
+                                    console.log('처리 중인 공휴일:', holiday);
+                                    
+                                    // month와 day가 문자열이면 숫자로 변환
+                                    const month = typeof holiday.month === 'string' ? parseInt(holiday.month) : holiday.month;
+                                    const day = typeof holiday.day === 'string' ? parseInt(holiday.day) : holiday.day;
+                                    
+                                    // MongoDB에서 가져온 데이터를 로컬 형식으로 변환
+                                    this.data.holidays[yearStr].push({
+                                        month: month,
+                                        day: day,
+                                        name: holiday.name,
+                                        _id: holiday._id // MongoDB ID 저장 (필요시 사용)
+                                    });
+                                });
+                                
+                                console.log(`${yearStr}년 공휴일 ${this.data.holidays[yearStr].length}개 로드 완료`);
+                                
+                                // 날짜순으로 정렬
+                                this.data.holidays[yearStr].sort((a, b) => {
+                                    if (a.month === b.month) {
+                                        return a.day - b.day;
+                                    }
+                                    return a.month - b.month;
+                                });
+                            } else {
+                                console.error('공휴일 데이터 로드 실패:', holidaysResponse.error || '응답 없음');
+                            }
+                        } catch (error) {
+                            console.error('공휴일 데이터 로드 중 오류 발생:', error);
+                        }
+                        
                         // nextId 업데이트 (가장 큰 ID + 1)
                         let maxId = 0;
                         this.data.oneTimeExpenses.forEach(expense => {
@@ -1457,11 +1507,85 @@ const DataManager = {
         return false;
     },
 
-    // 기준 년도 변경
+    // 연도 변경
     changeYear(year) {
-        this.data.year = parseInt(year);
+        this.data.year = year;
+        
+        // API를 통해 해당 연도의 공휴일 데이터 로드
+        const yearStr = year.toString();
+        if (window.api && window.api.holidays) {
+            console.log(`${yearStr}년 공휴일 데이터 로드 시도`);
+            window.api.holidays.getAll(year)
+                .then(response => {
+                    console.log(`${yearStr}년 공휴일 응답:`, response);
+                    if (response.success && response.data) {
+                        // 기존 데이터 초기화
+                        this.data.holidays[yearStr] = [];
+                        
+                        // API에서 가져온 공휴일 데이터 처리
+                        response.data.forEach(holiday => {
+                            console.log('처리 중인 공휴일:', holiday);
+                            
+                            // month와 day가 문자열이면 숫자로 변환
+                            const month = typeof holiday.month === 'string' ? parseInt(holiday.month) : holiday.month;
+                            const day = typeof holiday.day === 'string' ? parseInt(holiday.day) : holiday.day;
+                            
+                            this.data.holidays[yearStr].push({
+                                month: month,
+                                day: day,
+                                name: holiday.name,
+                                _id: holiday._id // MongoDB ID 저장
+                            });
+                        });
+                        
+                        // 날짜순으로 정렬
+                        this.data.holidays[yearStr].sort((a, b) => {
+                            if (a.month === b.month) {
+                                return a.day - b.day;
+                            }
+                            return a.month - b.month;
+                        });
+                        
+                        console.log(`${yearStr}년 공휴일 ${this.data.holidays[yearStr].length}개 로드 완료`);
+                        
+                        // 달력 등 UI 업데이트를 위한 이벤트 발생
+                        document.dispatchEvent(new CustomEvent('expenses-updated'));
+                    } else {
+                        console.error(`${yearStr}년 공휴일 데이터 로드 실패:`, response.error || '응답 없음');
+                    }
+                })
+                .catch(error => {
+                    console.error(`${yearStr}년 공휴일 데이터 로드 실패:`, error);
+                });
+        }
+        
+        // 일회성 지출 데이터도 API에서 로드
+        if (window.api && window.api.oneTimeExpenses) {
+            window.api.oneTimeExpenses.getAll(year)
+                .then(response => {
+                    if (response.success) {
+                        this.data.oneTimeExpenses = response.data;
+                        
+                        // MongoDB ID를 로컬 ID로 사용
+                        this.data.oneTimeExpenses.forEach(expense => {
+                            if (expense._id && !expense.id) {
+                                expense.id = expense._id;
+                            }
+                        });
+                        
+                        console.log(`${yearStr}년 일회성 지출 ${this.data.oneTimeExpenses.length}개 로드 완료`);
+                        
+                        // 달력 등 UI 업데이트를 위한 이벤트 발생
+                        document.dispatchEvent(new CustomEvent('expenses-updated'));
+                    }
+                })
+                .catch(error => {
+                    console.error(`${yearStr}년 일회성 지출 데이터 로드 실패:`, error);
+                });
+        }
+        
         this.saveData();
-        return this.data.year;
+        return year;
     },
     
     // 대분류 추가

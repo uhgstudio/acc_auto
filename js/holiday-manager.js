@@ -131,8 +131,17 @@ const HolidayManager = {
                         return a.month - b.month;
                     });
                     
-                    // 데이터 저장
+                    // 로컬 데이터 저장
                     DataManager.saveData();
+                    
+                    // MongoDB에도 저장하기
+                    try {
+                        // API를 통해 DB에 공휴일 저장
+                        this.saveHolidaysToDB(yearStr, DataManager.data.holidays[yearStr]);
+                    } catch (dbError) {
+                        console.error('공휴일 DB 저장 중 오류:', dbError);
+                        // DB 저장 실패해도 로컬 저장은 완료됨
+                    }
                     
                     // 공휴일 목록 다시 렌더링
                     this.renderHolidays();
@@ -368,6 +377,23 @@ const HolidayManager = {
         
         if (confirmDelete) {
             try {
+                // MongoDB에 저장된 공휴일이면 API를 통해 삭제
+                if (holiday._id && window.api && window.api.holidays) {
+                    console.log(`MongoDB에서 공휴일 삭제 시도: ${holiday._id}`);
+                    window.api.holidays.delete(holiday._id)
+                        .then(response => {
+                            if (response.success) {
+                                console.log('MongoDB에서 공휴일 삭제 성공');
+                            } else {
+                                console.error('MongoDB에서 공휴일 삭제 실패:', response.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('MongoDB에서 공휴일 삭제 오류:', error);
+                        });
+                }
+                
+                // 로컬 데이터에서도 삭제
                 DataManager.removeHoliday(year, index);
                 this.renderHolidays();
                 
@@ -422,18 +448,82 @@ const HolidayManager = {
                             return;
                         }
                         
-                        // 공휴일 추가
-                        DataManager.addHoliday(year.toString(), month, day, name);
-                        
-                        // 입력 필드 초기화
-                        document.getElementById('holiday-date').value = '';
-                        document.getElementById('holiday-name').value = '';
-                        
-                        // 목록 갱신
-                        this.renderHolidays();
-                        
-                        // 달력 업데이트를 위한 이벤트 발생
-                        document.dispatchEvent(new CustomEvent('expenses-updated'));
+                        // MongoDB에 공휴일 추가 (API 사용)
+                        if (window.api && window.api.holidays) {
+                            console.log(`MongoDB에 공휴일 추가 시도: ${year}년 ${month}월 ${day}일 ${name}`);
+                            const holidayData = {
+                                year: year,
+                                month: month,
+                                day: day,
+                                name: name
+                            };
+                            
+                            window.api.holidays.create(holidayData)
+                                .then(response => {
+                                    if (response.success) {
+                                        console.log('MongoDB에 공휴일 추가 성공:', response.data);
+                                        
+                                        // 입력 필드 초기화
+                                        document.getElementById('holiday-date').value = '';
+                                        document.getElementById('holiday-name').value = '';
+                                        
+                                        // 로컬 데이터에도 추가 (MongoDB ID 포함)
+                                        const yearStr = year.toString();
+                                        if (!DataManager.data.holidays[yearStr]) {
+                                            DataManager.data.holidays[yearStr] = [];
+                                        }
+                                        
+                                        DataManager.data.holidays[yearStr].push({
+                                            month: month,
+                                            day: day,
+                                            name: name,
+                                            _id: response.data._id
+                                        });
+                                        
+                                        // 날짜순 정렬
+                                        DataManager.data.holidays[yearStr].sort((a, b) => {
+                                            if (a.month === b.month) {
+                                                return a.day - b.day;
+                                            }
+                                            return a.month - b.month;
+                                        });
+                                        
+                                        // 로컬 데이터 저장
+                                        DataManager.saveData();
+                                        
+                                        // 목록 갱신
+                                        this.renderHolidays();
+                                        
+                                        // 달력 업데이트를 위한 이벤트 발생
+                                        document.dispatchEvent(new CustomEvent('expenses-updated'));
+                                    } else {
+                                        console.error('MongoDB에 공휴일 추가 실패:', response.error);
+                                        alert(`공휴일 추가에 실패했습니다: ${response.error || '알 수 없는 오류'}`);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('MongoDB에 공휴일 추가 오류:', error);
+                                    alert(`공휴일 추가 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`);
+                                    
+                                    // API 실패 시 로컬만 추가
+                                    DataManager.addHoliday(year.toString(), month, day, name);
+                                    this.renderHolidays();
+                                    document.dispatchEvent(new CustomEvent('expenses-updated'));
+                                });
+                        } else {
+                            // API를 사용할 수 없는 경우 로컬에만 추가
+                            DataManager.addHoliday(year.toString(), month, day, name);
+                            
+                            // 입력 필드 초기화
+                            document.getElementById('holiday-date').value = '';
+                            document.getElementById('holiday-name').value = '';
+                            
+                            // 목록 갱신
+                            this.renderHolidays();
+                            
+                            // 달력 업데이트를 위한 이벤트 발생
+                            document.dispatchEvent(new CustomEvent('expenses-updated'));
+                        }
                     } catch (error) {
                         alert(error.message);
                     }
@@ -475,5 +565,45 @@ const HolidayManager = {
                 this.fetchHolidays(DataManager.data.year);
             });
         }
+    },
+    
+    // MongoDB에 공휴일 저장
+    saveHolidaysToDB(year, holidays) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // 인증된 사용자만 API 호출 가능
+                if (!window.api || !window.api.holidays) {
+                    console.warn('API 클라이언트가 초기화되지 않았습니다.');
+                    resolve(false);
+                    return;
+                }
+                
+                // 먼저 해당 연도의 기존 공휴일을 모두 삭제 (초기화)
+                await window.api.holidays.deleteByYear(year);
+                
+                // 공휴일 데이터 준비
+                const holidaysToSave = holidays.map(holiday => ({
+                    year: parseInt(year),
+                    month: holiday.month,
+                    day: holiday.day,
+                    name: holiday.name
+                }));
+                
+                // 일괄 저장 API 호출
+                const result = await window.api.holidays.batchCreate(holidaysToSave);
+                
+                console.log(`DB 저장 결과: 성공 ${result.data.successCount}개, 실패 ${result.data.failedCount}개`);
+                
+                // 실패한 항목이 있다면 경고 표시
+                if (result.data.failedCount > 0) {
+                    console.warn('일부 공휴일 저장 실패:', result.data.failedItems);
+                }
+                
+                resolve(result.data.successCount > 0);
+            } catch (error) {
+                console.error('DB 저장 중 오류 발생:', error);
+                reject(error);
+            }
+        });
     }
 }; 
