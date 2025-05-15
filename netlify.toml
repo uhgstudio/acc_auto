@@ -8,6 +8,11 @@
   port = 8888
   publish = "dist"
 
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["express", "mongoose"]
+  included_files = ["server/**"]
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"

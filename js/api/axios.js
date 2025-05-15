@@ -53,13 +53,33 @@ async function getAxiosInstance() {
         return response;
       },
       (error) => {
-        if (error.response && error.response.status === 401) {
-          // 인증 오류 시 로그인 페이지로 리디렉션 또는 로그인 모달 표시
-          localStorage.removeItem('jwt_token');
-          console.error('인증이 필요합니다. 다시 로그인해주세요.');
+        console.error('API 에러 발생:', error);
+        
+        if (error.response) {
+          // 서버가 응답을 반환한 경우
+          console.error('응답 상태:', error.response.status);
+          console.error('응답 데이터:', error.response.data);
           
-          // 로그인 모달 표시 등의 처리
-          showLoginModal();
+          if (error.response.status === 401) {
+            // 인증 오류 시 로그인 페이지로 리디렉션 또는 로그인 모달 표시
+            localStorage.removeItem('jwt_token');
+            console.error('인증이 필요합니다. 다시 로그인해주세요.');
+            
+            // 로그인 모달 표시 등의 처리
+            showLoginModal();
+          } else if (error.response.status === 502) {
+            // 502 Bad Gateway - 서버리스 함수 문제일 가능성이 높음
+            console.error('서버 연결 문제가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            alert('서버 연결 문제가 발생했습니다. 잠시 후 다시 시도해주세요.');
+          }
+        } else if (error.request) {
+          // 요청은 전송되었으나 응답을 받지 못한 경우
+          console.error('응답을 받지 못했습니다:', error.request);
+          alert('서버 응답이 없습니다. 인터넷 연결을 확인해주세요.');
+        } else {
+          // 요청 설정 중 오류가 발생한 경우
+          console.error('요청 오류:', error.message);
+          alert('요청 처리 중 오류가 발생했습니다.');
         }
         
         return Promise.reject(error);

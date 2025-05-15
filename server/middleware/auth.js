@@ -1,6 +1,18 @@
 const jwt = require('jsonwebtoken');
-const config = require('../config/config');
 const User = require('../models/User');
+
+// JWT Secret을 가져오는 함수
+const getJwtSecret = () => {
+  // 환경 변수에서 JWT_SECRET 가져오기
+  const jwtSecret = process.env.JWT_SECRET;
+  
+  if (!jwtSecret) {
+    console.error('JWT_SECRET 환경 변수가 설정되지 않았습니다.');
+    return 'fallbacksecretkey'; // 기본값 (실제 배포시에는 반드시 환경 변수 설정 필요)
+  }
+  
+  return jwtSecret;
+};
 
 // 보호된 라우트를 위한 미들웨어
 exports.protect = async (req, res, next) => {
@@ -29,7 +41,8 @@ exports.protect = async (req, res, next) => {
 
     try {
       // 토큰 검증
-      const decoded = jwt.verify(token, config.jwtSecret);
+      const jwtSecret = getJwtSecret();
+      const decoded = jwt.verify(token, jwtSecret);
 
       // 사용자 ID로 사용자 정보 조회
       const user = await User.findById(decoded.id);
