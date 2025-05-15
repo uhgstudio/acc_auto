@@ -15,6 +15,7 @@ const ExpenseManager = {
         // 대분류 선택 요소 업데이트
         const mainCategorySelectors = document.querySelectorAll('.main-category-selector');
         mainCategorySelectors.forEach(selector => {
+            // 대분류 옵션 채우기
             this.populateMainCategorySelector(selector);
             
             // 연결된 중분류 선택 요소 찾기
@@ -22,10 +23,22 @@ const ExpenseManager = {
             if (form) {
                 const subCategorySelector = form.querySelector('.sub-category-selector');
                 if (subCategorySelector) {
+                    // 이전 이벤트 리스너 제거 (이벤트 중복 방지)
+                    const newSelector = selector.cloneNode(true);
+                    selector.parentNode.replaceChild(newSelector, selector);
+                    
                     // 대분류 변경 시 중분류 옵션 업데이트 이벤트
-                    selector.addEventListener('change', () => {
-                        this.populateSubCategorySelector(selector.value, subCategorySelector);
+                    newSelector.addEventListener('change', () => {
+                        const updatedSubSelector = this.populateSubCategorySelector(newSelector.value, subCategorySelector);
+                        
+                        // 중분류 선택기가 교체된 경우, 참조를 업데이트
+                        if (updatedSubSelector !== subCategorySelector) {
+                            // 이후 코드에서 참조가 필요한 경우 사용
+                        }
                     });
+                    
+                    // 초기 중분류 옵션 채우기
+                    this.populateSubCategorySelector(newSelector.value, subCategorySelector);
                 }
             }
         });
@@ -57,6 +70,14 @@ const ExpenseManager = {
     
     // 중분류 선택 요소에 옵션 채우기 (특정 대분류에 맞는 중분류들)
     populateSubCategorySelector(mainCode, selector) {
+        // 현재 선택된 값 저장
+        const currentValue = selector.value;
+        
+        // 이전 이벤트 리스너 제거 (이벤트 중복 방지)
+        const newSelector = selector.cloneNode(false); // 내용 없이 복제
+        selector.parentNode.replaceChild(newSelector, selector);
+        selector = newSelector;
+        
         // 선택 요소 비우기
         Utils.dom.clearElement(selector);
         
@@ -66,17 +87,55 @@ const ExpenseManager = {
         defaultOption.textContent = '중분류 선택';
         selector.appendChild(defaultOption);
         
-        if (!mainCode) return;
-        
-        // 선택한 대분류에 맞는 중분류 옵션 추가
-        const subCategories = DataManager.data.categories.sub.filter(sub => sub.mainCode === mainCode);
+        // 모든 중분류 또는 특정 대분류의 중분류 목록 추가
+        let subCategories = [];
+        if (!mainCode) {
+            // 대분류가 선택되지 않은 경우 모든 중분류 표시
+            subCategories = DataManager.data.categories.sub;
+        } else {
+            // 대분류가 선택된 경우 해당 대분류의 중분류만 표시
+            subCategories = DataManager.data.categories.sub.filter(sub => sub.mainCode === mainCode);
+        }
         
         subCategories.forEach(category => {
             const option = document.createElement('option');
             option.value = category.code;
-            option.textContent = `${category.name} (${category.code})`;
+            
+            // 대분류 정보도 함께 표시
+            const mainCategory = DataManager.data.categories.main.find(main => main.code === category.mainCode);
+            const mainCategoryName = mainCategory ? mainCategory.name : '';
+            
+            option.textContent = `${category.name} (${mainCategoryName})`;
+            option.dataset.mainCode = category.mainCode; // 대분류 코드 저장
+            
+            // 이전에 선택된 값 유지
+            if (category.code === currentValue) {
+                option.selected = true;
+            }
+            
             selector.appendChild(option);
         });
+        
+        // 중분류 변경 이벤트 - 연결된 대분류 자동 선택
+        selector.addEventListener('change', () => {
+            if (selector.value) {
+                const selectedOption = selector.options[selector.selectedIndex];
+                const mainCode = selectedOption.dataset.mainCode;
+                
+                if (mainCode) {
+                    // 연결된 대분류 선택기 찾기 (같은 폼 내)
+                    const form = selector.closest('form');
+                    if (form) {
+                        const mainSelector = form.querySelector('.main-category-selector');
+                        if (mainSelector && mainSelector.value !== mainCode) {
+                            mainSelector.value = mainCode;
+                        }
+                    }
+                }
+            }
+        });
+        
+        return selector; // 새로 만든 선택기 반환
     },
     
     // 반복 지출 목록 렌더링
