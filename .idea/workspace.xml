@@ -4,15 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="864308fc-bd40-4ebf-b5bd-ea800c108cc3" name="변경" comment="로컬 스토리지 방식에서 DB저장으로 구조 변경">
-      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/js/api/axios.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/api/axios.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/js/data.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/data.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/js/expense-calendar.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/expense-calendar.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/js/expense-manager.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/expense-manager.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/js/holiday-manager.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/holiday-manager.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/controllers/expenses.js" beforeDir="false" afterPath="$PROJECT_DIR$/server/controllers/expenses.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/server.js" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.js" afterDir="false" />
+    <list default="true" id="864308fc-bd40-4ebf-b5bd-ea800c108cc3" name="변경" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,21 +21,21 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "uhgstudio"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;uhgstudio&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/uhgstudio/acc_auto.git",
-    "accountId": "2e1d9fd4-6661-4ffd-bfe6-f54a1d26784f"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/uhgstudio/acc_auto.git&quot;,
+    &quot;accountId&quot;: &quot;2e1d9fd4-6661-4ffd-bfe6-f54a1d26784f&quot;
   }
-}]]></component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 1
-}]]></component>
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
   <component name="ProjectId" id="2x1APU1gi3AUVZ2DGgRiW2aFWlX" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -54,7 +48,7 @@
     "JavaScript 디버그.index.html.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "feature",
+    "git-widget-placeholder": "master",
     "ignore.virus.scanning.warn.message": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
