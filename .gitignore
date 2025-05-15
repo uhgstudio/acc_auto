@@ -1,0 +1,36 @@
+# 노드 모듈과 의존성
+node_modules/
+package-lock.json
+
+# 환경 변수
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 로그 파일
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs
+*.log
+
+# 런타임 데이터
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# 빌드 출력
+dist/
+build/
+.netlify/
+
+# 시스템 파일
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo

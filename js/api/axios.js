@@ -5,7 +5,7 @@
 // 브라우저에서는 window.location.hostname을 기반으로 판단
 const API_URL = window.location.hostname === 'localhost' 
                 ? 'http://localhost:5000/api' 
-                : '/api';
+                : '/.netlify/functions/api';
 
 // Axios 인스턴스 생성 및 설정
 async function getAxiosInstance() {
