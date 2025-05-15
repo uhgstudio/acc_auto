@@ -145,5 +145,60 @@ const Utils = {
         generateId() {
             return 'id-' + Date.now() + '-' + Math.floor(Math.random() * 1000000);
         }
+    },
+    
+    // 토스트 알림 표시
+    showToast(message, type = 'info', duration = 3000) {
+        // 기존 토스트 컨테이너 확인
+        let toastContainer = document.querySelector('.toast-container');
+        
+        // 컨테이너가 없으면 생성
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // 토스트 요소 생성
+        const toastId = 'toast-' + Date.now();
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type} border-0`;
+        toast.id = toastId;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        
+        // 토스트 내용 생성
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        
+        // 토스트 컨테이너에 추가
+        toastContainer.appendChild(toast);
+        
+        // 부트스트랩 토스트 객체 생성 및 표시
+        const bsToast = new bootstrap.Toast(toast, {
+            autohide: true,
+            delay: duration
+        });
+        
+        bsToast.show();
+        
+        // 지정된 시간 후 자동 제거
+        setTimeout(() => {
+            toast.remove();
+            
+            // 컨테이너가 비었으면 제거
+            if (toastContainer.childElementCount === 0) {
+                toastContainer.remove();
+            }
+        }, duration + 500);
+        
+        return bsToast;
     }
 }; 

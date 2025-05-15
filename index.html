@@ -15,6 +15,10 @@
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Axios 라이브러리 로드 -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- API 클라이언트 로드 -->
+    <script src="js/api/axios.js"></script>
     <style>
         :root {
             --primary-color: #e78fb3;
@@ -1064,22 +1068,27 @@
     <div class="app-container">
         <div class="app-header">
             <h1><i class="bi bi-calendar-check"></i> 자금수지</h1>
-            <div class="summary-pills">
-                <div class="summary-pill">
-                    <i class="bi bi-cash-stack" style="color: #c06c6c;"></i>
-                    <span>연간 총 지출: <span id="total-expense" style="color: #c06c6c;">0</span>원</span>
+            <div class="d-flex align-items-center">
+                <div class="summary-pills me-3">
+                    <div class="summary-pill">
+                        <i class="bi bi-cash-stack" style="color: #c06c6c;"></i>
+                        <span>연간 총 지출: <span id="total-expense" style="color: #c06c6c;">0</span>원</span>
+                    </div>
+                    <div class="summary-pill">
+                        <i class="bi bi-cash-coin" style="color: #9a7592;"></i>
+                        <span>연간 총 수입: <span id="total-income" style="color: #9a7592;">0</span>원</span>
+                    </div>
+                    <div class="summary-pill">
+                        <i class="bi bi-wallet2" style="color: var(--primary-dark);"></i>
+                        <span>연간 순수입: <span id="net-income">0</span>원</span>
+                    </div>
+                    <select id="year-selector" class="form-select form-select-sm" style="width: 120px; border-color: var(--border-color);">
+                        <!-- 년도 옵션은 자바스크립트로 생성 -->
+                    </select>
                 </div>
-                <div class="summary-pill">
-                    <i class="bi bi-cash-coin" style="color: #9a7592;"></i>
-                    <span>연간 총 수입: <span id="total-income" style="color: #9a7592;">0</span>원</span>
-                </div>
-                <div class="summary-pill">
-                    <i class="bi bi-wallet2" style="color: var(--primary-dark);"></i>
-                    <span>연간 순수입: <span id="net-income">0</span>원</span>
-                </div>
-                <select id="year-selector" class="form-select form-select-sm" style="width: 120px; border-color: var(--border-color);">
-                    <!-- 년도 옵션은 자바스크립트로 생성 -->
-                </select>
+                <button id="logout-btn" class="btn btn-sm" style="background-color: var(--primary-light); color: var(--primary-dark); border: none;">
+                    <i class="bi bi-box-arrow-right"></i> 로그아웃
+                </button>
             </div>
         </div>
         
@@ -1536,5 +1545,35 @@
             }
         });
     </script>
+    
+    <!-- 로그인 모달 -->
+    <div class="modal fade" id="login-modal" tabindex="-1" aria-labelledby="login-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="login-modal-label">로그인</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="login-form">
+                        <div class="mb-3">
+                            <label for="login-email" class="form-label">이메일</label>
+                            <input type="email" class="form-control" id="login-email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="login-password" class="form-label">비밀번호</label>
+                            <input type="password" class="form-control" id="login-password" required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn" style="background-color: var(--primary-color); color: white;">로그인</button>
+                        </div>
+                    </form>
+                    <div class="mt-3 text-center">
+                        <p>계정이 없으신가요? <a href="/register.html">회원가입</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html> 

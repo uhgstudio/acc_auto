@@ -490,17 +490,22 @@ const CategoryManager = {
         
         if (newName !== null && newName.trim() !== '') {
             try {
-                DataManager.updateMainCategoryName(index, newName);
-                
-                // 성공 메시지
-                alert(`대분류명이 '${newName}'으로 변경되었습니다.`);
-                
-                // 화면 갱신
-                this.renderMainCategories();
-                this.renderSubCategories(); // 연결된 중분류 표시도 갱신
-                
-                // 대분류 선택 옵션 업데이트
-                this.updateMainCategorySelectors();
+                // Promise를 반환하는 updateMainCategoryName 함수 호출
+                DataManager.updateMainCategoryName(index, newName)
+                    .then(() => {
+                        // 성공 메시지
+                        alert(`대분류명이 '${newName}'으로 변경되었습니다.`);
+                        
+                        // 화면 갱신
+                        this.renderMainCategories();
+                        this.renderSubCategories(); // 연결된 중분류 표시도 갱신
+                        
+                        // 대분류 선택 옵션 업데이트
+                        this.updateMainCategorySelectors();
+                    })
+                    .catch(error => {
+                        alert('카테고리 변경 중 오류가 발생했습니다: ' + error.message);
+                    });
             } catch (error) {
                 alert(error.message);
             }
@@ -520,16 +525,21 @@ const CategoryManager = {
         
         if (newName !== null && newName.trim() !== '') {
             try {
-                DataManager.updateSubCategoryName(index, newName);
-                
-                // 성공 메시지
-                alert(`중분류명이 '${newName}'으로 변경되었습니다.`);
-                
-                // 화면 갱신
-                this.renderSubCategories();
-                
-                // 중분류 선택 옵션 업데이트
-                this.updateSubCategorySelectors();
+                // Promise를 반환하는 updateSubCategoryName 함수 호출
+                DataManager.updateSubCategoryName(index, newName)
+                    .then(() => {
+                        // 성공 메시지
+                        alert(`중분류명이 '${newName}'으로 변경되었습니다.`);
+                        
+                        // 화면 갱신
+                        this.renderSubCategories();
+                        
+                        // 중분류 선택 옵션 업데이트
+                        this.updateSubCategorySelectors();
+                    })
+                    .catch(error => {
+                        alert('카테고리 변경 중 오류가 발생했습니다: ' + error.message);
+                    });
             } catch (error) {
                 alert(error.message);
             }

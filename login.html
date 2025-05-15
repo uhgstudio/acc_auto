@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' http://localhost:5000; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:;">
+    <title>로그인 - 자금수지</title>
+    <!-- 테마 초기화를 위한 인라인 스크립트 -->
+    <script>
+        // 페이지 로드 전 테마 적용하여 깜빡임 방지
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'default';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Axios 라이브러리 로드 -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- API 클라이언트 로드 -->
+    <script src="js/api/axios.js"></script>
+    <style>
+        :root {
+            --primary-color: #e78fb3;
+            --primary-dark: #d07396;
+            --primary-light: #fae6ef;
+            --accent-color: #d07396;
+            --dark-color: #4a5568;
+            --light-color: #f9edf3;
+            --border-color: #f1d6e3;
+            --text-color: #4a5568;
+            --text-muted: #718096;
+        }
+        
+        /* 테마 색상 변수 정의 */
+        [data-theme="blue"] {
+            --primary-color: #81a4cd;
+            --primary-dark: #6389b8;
+            --primary-light: #e6f0fa;
+            --accent-color: #5a89bc;
+            --light-color: #edf5fd;
+            --border-color: #c6d9ee;
+        }
+
+        [data-theme="green"] {
+            --primary-color: #7eb594;
+            --primary-dark: #6aa17e;
+            --primary-light: #e7f4ee;
+            --accent-color: #5e9977;
+            --light-color: #eef7f3;
+            --border-color: #c5e1d3;
+        }
+
+        [data-theme="orange"] {
+            --primary-color: #e0b982;
+            --primary-dark: #d1a86b;
+            --primary-light: #faf3e8;
+            --accent-color: #c99c5b;
+            --light-color: #fdf7ee;
+            --border-color: #f0dec2;
+        }
+
+        [data-theme="purple"] {
+            --primary-color: #a393c0;
+            --primary-dark: #8d7aad;
+            --primary-light: #f0ebf7;
+            --accent-color: #7d67a3;
+            --light-color: #f5f1fa;
+            --border-color: #dcd1ec;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #faf5f8;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .auth-container {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+        }
+        
+        .auth-card {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .auth-logo {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .auth-title {
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+            margin-bottom: 5px;
+        }
+        
+        .auth-form .form-control {
+            border-color: var(--border-color);
+            padding: 12px;
+        }
+        
+        .auth-form .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgb(231 143 179 / 25%);
+        }
+        
+        .auth-btn {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            padding: 12px;
+            font-weight: 500;
+        }
+        
+        .auth-btn:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-muted);
+        }
+        
+        .auth-link {
+            color: var(--primary-dark);
+            text-decoration: none;
+        }
+        
+        .auth-link:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+        
+        .auth-alert {
+            display: none;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <h1 class="auth-title">자금수지 로그인</h1>
+                <p class="text-muted">계정 정보로 로그인해주세요</p>
+            </div>
+            
+            <div class="alert alert-danger auth-alert" id="login-error" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i> <span id="error-message"></span>
+            </div>
+            
+            <form id="login-form" class="auth-form">
+                <div class="mb-3">
+                    <label for="login-email" class="form-label">이메일</label>
+                    <input type="email" class="form-control" id="login-email" required>
+                </div>
+                <div class="mb-3">
+                    <label for="login-password" class="form-label">비밀번호</label>
+                    <input type="password" class="form-control" id="login-password" required>
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="remember-me">
+                    <label class="form-check-label" for="remember-me">로그인 상태 유지</label>
+                </div>
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn auth-btn">로그인</button>
+                </div>
+            </form>
+        </div>
+        <div class="auth-footer">
+            계정이 없으신가요? <a href="/register.html" class="auth-link">회원가입하기</a>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('login-form');
+            const loginError = document.getElementById('login-error');
+            const errorMessage = document.getElementById('error-message');
+            
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                const rememberMe = document.getElementById('remember-me').checked;
+                
+                try {
+                    // API 호출 전 에러 메시지 숨기기
+                    loginError.style.display = 'none';
+                    
+                    // 로그인 API 호출
+                    const response = await window.api.auth.login({
+                        email,
+                        password,
+                        rememberMe
+                    });
+                    
+                    if (response.success) {
+                        // 로그인 성공 시 메인 페이지로 리디렉션
+                        window.location.href = '/';
+                    } else {
+                        // API가 성공은 했지만 내부적으로 오류가 있는 경우
+                        loginError.style.display = 'block';
+                        errorMessage.textContent = response.error || '로그인에 실패했습니다.';
+                    }
+                } catch (error) {
+                    console.error('로그인 중 오류 발생:', error);
+                    loginError.style.display = 'block';
+                    errorMessage.textContent = error.response?.data?.error || '로그인 중 오류가 발생했습니다.';
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

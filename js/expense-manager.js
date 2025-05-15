@@ -348,16 +348,37 @@ const ExpenseManager = {
     },
     
     // 반복 지출 삭제
-    deleteRecurringExpense(index) {
+    async deleteRecurringExpense(index) {
         const expense = DataManager.data.recurringExpenses[index];
         const confirmDelete = confirm(`"${expense.description}" 항목을 삭제하시겠습니까?`);
         
         if (confirmDelete) {
-            DataManager.removeRecurringExpense(index);
-            this.renderRecurringExpenses();
-            
-            // 달력 업데이트를 위한 이벤트 발생
-            document.dispatchEvent(new CustomEvent('expenses-updated'));
+            try {
+                // 로딩 표시 (옵션)
+                const deleteBtn = document.querySelector(`.delete-recurring-expense[data-index="${index}"]`);
+                if (deleteBtn) {
+                    deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                    deleteBtn.disabled = true;
+                }
+                
+                // 비동기 삭제 처리 (서버 API 호출 포함)
+                await DataManager.removeRecurringExpense(index);
+                
+                // UI 업데이트
+                this.renderRecurringExpenses();
+                
+                // 달력 업데이트를 위한 이벤트 발생
+                document.dispatchEvent(new CustomEvent('expenses-updated'));
+                
+                // 성공 메시지 (옵션)
+                Utils.showToast('반복 지출이 삭제되었습니다.', 'success');
+            } catch (error) {
+                console.error('반복 지출 삭제 중 오류 발생:', error);
+                Utils.showToast('삭제 중 오류가 발생했습니다. 서버 연결을 확인해주세요.', 'danger');
+                
+                // 오류 시에도 UI 갱신
+                this.renderRecurringExpenses();
+            }
         }
     },
     

@@ -4,11 +4,21 @@
  */
 const App = {
     // 앱 초기화
-    initialize() {
+    async initialize() {
         console.log('가계부 앱 초기화 중...');
         
-        // 데이터 로드
-        DataManager.initialize();
+        // 로그인 상태 확인
+        const isLoggedIn = await this.checkAuthStatus();
+        
+        // 로그인이 필요하면 로그인 페이지로 리디렉션
+        if (!isLoggedIn && window.location.pathname !== '/login.html') {
+            // 로그인 모달 표시 또는 로그인 페이지로 이동
+            this.showLoginModal();
+            return;
+        }
+        
+        // 데이터 로드 (이제 비동기)
+        await DataManager.initialize();
         
         // 기존 OneTimeExpenses에서 recurringId가 있는 항목 제거 (중복 데이터 정리)
         DataManager.cleanupDuplicateRecurringItems();
@@ -31,10 +41,90 @@ const App = {
         // 테마 설정 기능 초기화
         this.setupThemeManager();
         
+        // 로그아웃 버튼 설정
+        this.setupLogoutButton();
+        
         // 상단 요약 정보 업데이트
         this.updateSummary();
         
         console.log('가계부 앱 초기화 완료');
+    },
+    
+    // 사용자 인증 상태 확인
+    async checkAuthStatus() {
+        try {
+            if (!window.api) return false;
+            
+            const response = await window.api.auth.getMe();
+            return response && response.success && response.data;
+        } catch (error) {
+            console.error('인증 상태 확인 중 오류:', error);
+            return false;
+        }
+    },
+    
+    // 로그인 모달 표시
+    showLoginModal() {
+        // Bootstrap 모달이 있는지 확인
+        const loginModal = document.getElementById('login-modal');
+        if (loginModal) {
+            // 부트스트랩 모달 표시
+            const modal = new bootstrap.Modal(loginModal);
+            modal.show();
+            
+            // 로그인 폼 처리
+            this.setupLoginForm();
+        } else {
+            // 로그인 페이지로 리디렉션
+            window.location.href = '/login.html';
+        }
+    },
+    
+    // 로그인 폼 이벤트 설정
+    setupLoginForm() {
+        const loginForm = document.getElementById('login-form');
+        if (!loginForm) return;
+        
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                const response = await window.api.auth.login({ email, password });
+                if (response.success) {
+                    window.location.reload(); // 페이지 새로고침하여 초기화
+                } else {
+                    alert('로그인에 실패했습니다: ' + (response.error || '알 수 없는 오류'));
+                }
+            } catch (error) {
+                alert('로그인 중 오류가 발생했습니다: ' + error.message);
+            }
+        });
+    },
+    
+    // 로그아웃 버튼 설정
+    setupLogoutButton() {
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
+                try {
+                    if (window.api) {
+                        await window.api.auth.logout();
+                    }
+                    
+                    // 로컬 저장소의 토큰 삭제
+                    localStorage.removeItem('jwt_token');
+                    
+                    // 로그인 페이지로 리디렉션
+                    window.location.href = '/login.html';
+                } catch (error) {
+                    console.error('로그아웃 중 오류:', error);
+                    alert('로그아웃 중 오류가 발생했습니다');
+                }
+            });
+        }
     },
     
     // 각 모듈 초기화

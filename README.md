@@ -1,102 +1,159 @@
-# 연간 자금수지 관리 시스템
+# 자금수지 관리 웹 애플리케이션
 
-이 프로젝트는 연간 자금수지를 관리하고, 월별 수입/지출을 계산하는 웹 애플리케이션입니다.
+이 프로젝트는 개인 및 가계의 자금수지를 관리하고, 월별 수입/지출을 계산하는 웹 애플리케이션입니다.
 
 ## 주요 기능
 
-1. **자금수지 관리**
-   - 대분류/중분류별 자금수지 관리
-   - 대분류/중분류별 잔액 계산 및 표시
-   - 이전달 기말잔액이 다음달 기초잔액으로 자동 반영
-
-2. **반복 지출/수입 설정**
-   - 매월 특정 날짜에 발생하는 지출/수입 설정
-   - 주말이나 공휴일인 경우 자동으로 다음 영업일로 조정
-
-3. **일회성 지출/수입 추가**
-   - 특정 날짜에 발생하는 일회성 지출/수입 추가
-
-4. **월별 달력 및 요약**
-   - 월별로 수입/지출 내역 확인 가능
-   - 월별 잔액과 이월 금액 자동 계산
-   - 상세보기 기능으로 내역 확인 (잔액 표시 포함)
-   - 상세보기에서 항목 수정 및 삭제 기능
-
-5. **테마 설정**
-   - 다양한 테마 색상 선택 가능 (핑크, 블루, 그린, 오렌지, 퍼플)
-   - 모든 UI 요소에 테마 색상 적용
-
-6. **데이터 백업 및 복원**
-   - 현재 데이터를 JSON 파일로 백업
-   - 백업 파일에서 데이터 복원 가능
-   - 현재 화면에 표시된 데이터를 CSV 형식(엑셀)으로 내보내기 가능
-   - 비밀번호(230218) 확인 후 모든 데이터 초기화 가능
-
-7. **공휴일 관리**
-   - 연도별로 공휴일 추가 및 삭제 가능
-   - 새 년도 추가 기능
-   - 공공데이터포털 API를 통한 공휴일 자동 가져오기
-   - 공휴일은 지출 일정 조정에 자동 반영
-
-## UI 개선 사항
-
-1. **테이블 레이아웃 최적화**
-   - 구분 열 너비 증가
-   - 고정 열 설정으로 가로 스크롤 시에도 주요 정보 유지
-   - 대용량 데이터 처리를 위한 가로 스크롤 기능
-
-2. **가시성 개선**
-   - 큰 금액 표시 시 셀 겹침 문제 해결
-   - 가로 스크롤 시 고정 열 배경색 유지
-   - 적절한 글꼴 크기 및 셀 너비 조정
-
-3. **사용자 친화적 UI**
-   - 테마 색상 변경으로 시각적 사용자 경험 개선
-   - 상세보기 팝업에 테마 색상 적용
-   - 직관적인 잔액 계산 및 표시
-
-## 사용 방법
-
-1. **자금수지 관리**:
-   - 자금수지 탭에서 대분류/중분류별 수입/지출 관리
-   - 이전달 기말잔액이 자동으로 다음달 기초잔액에 반영됨
-
-2. **지출/수입 항목 추가**:
-   - 반복 항목: 매월 발생하는 항목 설정
-   - 일회성 항목: 특정 날짜에 발생하는 항목 추가
-
-3. **월별 내역 확인**:
-   - 월별 달력에서 요약 정보 확인
-   - 상세 보기 버튼으로 해당 월의 모든 내역 및 잔액 확인
-   - 상세보기 화면에서 각 항목 수정/삭제 가능
-   - 일회성 지출/수입만 직접 수정 가능 (반복 항목은 반복 지출 탭에서 관리)
-
-4. **테마 변경**:
-   - 설정 메뉴에서 원하는 테마 색상 선택
-
-5. **데이터 관리**:
-   - 백업: 현재 데이터를 JSON 파일로 저장
-   - 복원: 백업 파일에서 데이터 불러오기
-   - 초기화: 비밀번호 입력 후 모든 데이터 초기화
-
-## 데이터 저장
-
-기본적으로 모든 데이터는 브라우저의 localStorage에 저장되므로 페이지를 새로고침해도 데이터가 유지됩니다. 하지만 브라우저 데이터를 삭제하거나 다른 기기에서 사용할 경우를 대비해 백업 기능을 사용하는 것이 좋습니다.
+- 사용자 인증 (로그인/회원가입)
+- 월별 지출/수입 관리 및 시각화 
+- 반복 지출/수입 항목 관리
+- 일회성 지출/수입 항목 관리
+- 지출/수입 분류 관리 (대분류/중분류)
+- 자금수지 요약 및 보고서
+- 공휴일 관리
+- 다양한 테마 지원
 
 ## 기술 스택
 
-- HTML5
-- CSS3 (CSS 변수를 활용한 테마 지원)
-- JavaScript (Vanilla)
-- Bootstrap 5 (UI 컴포넌트)
+### 프론트엔드
+- HTML, CSS, JavaScript
+- Bootstrap 5 (UI 프레임워크)
+- Axios (HTTP 클라이언트)
 
-## 실행 방법
+### 백엔드
+- Node.js
+- Express.js (웹 프레임워크)
+- MongoDB (데이터베이스)
+- Mongoose (ODM)
+- JWT (인증)
+- bcrypt.js (암호화)
 
-1. 프로젝트 파일을 다운로드하거나 클론합니다.
-2. 웹 브라우저에서 `index.html` 파일을 엽니다.
+## 시작하기
 
-별도의 서버가 필요하지 않으며, 모든 기능은 클라이언트 측에서 실행됩니다.
+### 필수 조건
+- Node.js (>= 14.x)
+- MongoDB (로컬 설치 또는 MongoDB Atlas)
 
-## 공휴일 처리
+### 설치 및 실행
 
-현재 버전에서는 몇 가지 주요 한국 공휴일만 포함되어 있습니다. 필요에 따라 `script.js` 파일의 `fixedHolidays` 배열을 수정하여 더 많은 공휴일을 추가할 수 있습니다. 
+1. 레포지토리 클론
+```bash
+git clone https://github.com/yourusername/finance-app.git
+cd finance-app
+```
+
+2. 필요한 패키지 설치
+```bash
+npm install
+```
+
+3. 환경 변수 설정
+`.env` 파일을 루트 디렉토리에 생성하고 다음 변수를 설정합니다:
+```
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/finance_app
+JWT_SECRET=your_secret_key
+JWT_EXPIRE=30d
+JWT_COOKIE_EXPIRE=30
+```
+
+4. 서버 실행
+```bash
+# 개발 모드
+npm run dev
+
+# 프로덕션 모드
+npm start
+```
+
+5. 브라우저에서 애플리케이션 접속
+```
+http://localhost:5000
+```
+
+## 백엔드 API 엔드포인트
+
+### 인증
+- `POST /api/auth/register` - 사용자 등록
+- `POST /api/auth/login` - 로그인
+- `GET /api/auth/me` - 현재 로그인한 사용자 정보 조회
+- `GET /api/auth/logout` - 로그아웃
+
+### 일회성 지출/수입
+- `GET /api/expenses/one-time` - 모든 일회성 지출/수입 항목 조회
+- `GET /api/expenses/one-time/:id` - 특정 일회성 지출/수입 항목 조회
+- `POST /api/expenses/one-time` - 일회성 지출/수입 항목 생성
+- `PUT /api/expenses/one-time/:id` - 일회성 지출/수입 항목 수정
+- `DELETE /api/expenses/one-time/:id` - 일회성 지출/수입 항목 삭제
+
+### 반복 지출/수입
+- `GET /api/expenses/recurring` - 모든 반복 지출/수입 항목 조회
+- `GET /api/expenses/recurring/:id` - 특정 반복 지출/수입 항목 조회
+- `POST /api/expenses/recurring` - 반복 지출/수입 항목 생성
+- `PUT /api/expenses/recurring/:id` - 반복 지출/수입 항목 수정
+- `DELETE /api/expenses/recurring/:id` - 반복 지출/수입 항목 삭제
+
+## 클라이언트에서 API 사용 방법
+
+기존 로컬스토리지 기반 코드를 API 호출 방식으로 변경하는 예시:
+
+**기존 코드 (로컬스토리지 사용):**
+```javascript
+// 일회성 지출 항목 추가
+addOneTimeExpense(expense) {
+    expense.id = Utils.generateId();
+    this.data.oneTimeExpenses.push(expense);
+    this.saveData();
+    this.notifyUpdate();
+}
+```
+
+**변경된 코드 (API 사용):**
+```javascript
+// 일회성 지출 항목 추가
+async addOneTimeExpense(expense) {
+    try {
+        await api.oneTimeExpenses.create(expense);
+        this.notifyUpdate();
+        return true;
+    } catch (error) {
+        console.error('일회성 지출 추가 중 오류 발생:', error);
+        return false;
+    }
+}
+```
+
+## 프로젝트 구조
+
+```
+├── server/              # 백엔드 코드
+│   ├── config/          # 설정 파일
+│   ├── controllers/     # 컨트롤러
+│   ├── middleware/      # 미들웨어
+│   ├── models/          # Mongoose 모델
+│   ├── routes/          # 라우트 정의
+│   └── server.js        # 서버 진입점
+├── js/                  # 프론트엔드 JavaScript
+│   ├── api/             # API 클라이언트
+│   ├── utils.js         # 유틸리티 함수
+│   ├── data.js          # 데이터 관리
+│   ├── app.js           # 메인 앱 로직
+│   └── ...              # 기타 JS 파일
+├── styles.css           # 스타일시트
+├── index.html           # 메인 HTML
+├── login.html           # 로그인 페이지
+├── package.json         # 프로젝트 의존성
+└── README.md            # 프로젝트 문서
+```
+
+## 기여하기
+
+1. 이 저장소를 포크합니다.
+2. 새로운 기능 브랜치를 생성합니다 (`git checkout -b feature/amazing-feature`).
+3. 변경 사항을 커밋합니다 (`git commit -m 'Add some amazing feature'`).
+4. 브랜치에 푸시합니다 (`git push origin feature/amazing-feature`).
+5. Pull Request를 생성합니다.
+
+## 라이센스
+
+이 프로젝트는 ISC 라이센스 하에 배포됩니다. 
